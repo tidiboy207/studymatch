@@ -1,0 +1,712 @@
+import {
+  UserProfile,
+  MatchCandidate,
+  MatchingWeights,
+  MatchRequest,
+  StudySession,
+  SessionGoal,
+  ResourceItem,
+  PaymentEvent,
+  SafetyReport
+} from '../types';
+import { MOCK_PROFILES, STUDENT_A_ID, STUDENT_B_ID } from '../data/mockProfiles';
+import { MOCK_RESOURCES } from '../data/mockResources';
+import { calculateMatchScore, rankMatchingCandidates, DEFAULT_WEIGHTS } from './matchingEngine';
+import { supabase, isSupabaseConfigured } from './supabaseClient';
+
+// Key LocalStorage
+const KEYS = {
+  PROFILES: 'studymatch_profiles_v1',
+  ACTIVE_USER_ID: 'studymatch_active_user_id_v1',
+  RESOURCES: 'studymatch_resources_v1',
+  SAVED_RESOURCES: 'studymatch_saved_resources_v1',
+  MATCH_REQUESTS: 'studymatch_match_requests_v1',
+  SESSIONS: 'studymatch_sessions_v1',
+  PAYMENTS: 'studymatch_payments_v1',
+  REPORTS: 'studymatch_reports_v1',
+  BLOCKED: 'studymatch_blocked_v1',
+  COMMISSION_FEE: 'studymatch_platform_fee_v1'
+};
+
+// Khởi tạo hạt nhân dữ liệu mẫu trong LocalStorage
+function initStorage() {
+  if (!localStorage.getItem(KEYS.PROFILES)) {
+    localStorage.setItem(KEYS.PROFILES, JSON.stringify(MOCK_PROFILES));
+  }
+  if (!localStorage.getItem(KEYS.ACTIVE_USER_ID)) {
+    localStorage.setItem(KEYS.ACTIVE_USER_ID, STUDENT_A_ID);
+  }
+  if (!localStorage.getItem(KEYS.RESOURCES)) {
+    localStorage.setItem(KEYS.RESOURCES, JSON.stringify(MOCK_RESOURCES));
+  }
+  if (!localStorage.getItem(KEYS.SAVED_RESOURCES)) {
+    localStorage.setItem(KEYS.SAVED_RESOURCES, JSON.stringify(['11111111-1111-1111-1111-111111111101']));
+  }
+  if (!localStorage.getItem(KEYS.BLOCKED)) {
+    localStorage.setItem(KEYS.BLOCKED, JSON.stringify([]));
+  }
+  if (!localStorage.getItem(KEYS.PAYMENTS)) {
+    const initialPayments: PaymentEvent[] = [
+      {
+        id: 'pay-seed-1',
+        user_id: STUDENT_B_ID,
+        plan_code: 'plus_29k',
+        amount: 29000,
+        user_confirmed_transfer: true,
+        clicked_at: '2026-10-20T10:15:00Z'
+      },
+      {
+        id: 'pay-seed-2',
+        user_id: '88888888-8888-8888-8888-888888888888',
+        plan_code: 'sprint_19k',
+        amount: 19000,
+        user_confirmed_transfer: true,
+        clicked_at: '2026-10-22T14:30:00Z'
+      },
+      {
+        id: 'pay-seed-3',
+        user_id: 'cccccccc-cccc-cccc-cccc-cccccccccccc',
+        plan_code: 'sprint_19k',
+        amount: 19000,
+        user_confirmed_transfer: false,
+        clicked_at: '2026-10-24T09:00:00Z'
+      }
+    ];
+    localStorage.setItem(KEYS.PAYMENTS, JSON.stringify(initialPayments));
+  }
+  if (!localStorage.getItem(KEYS.MATCH_REQUESTS)) {
+    // Demo pending invite: Sinh viên B gửi lời mời cho Sinh viên A
+    const initialRequests: MatchRequest[] = [
+      {
+        id: 'req-seed-01',
+        sender_id: STUDENT_B_ID,
+        receiver_id: STUDENT_A_ID,
+        compatibility_score: 93,
+        match_reason: 'Độ hợp 93% • Cùng ôn MI1111 - Giải tích 1 • Bù trừ sâu Tích phân suy rộng • Trùng tối T2, T4',
+        status: 'pending',
+        created_at: new Date(Date.now() - 3600000).toISOString()
+      }
+    ];
+    localStorage.setItem(KEYS.MATCH_REQUESTS, JSON.stringify(initialRequests));
+  }
+  if (!localStorage.getItem(KEYS.SESSIONS)) {
+    // 1 phiên học sắp tới giữa Sinh viên A & B
+    const defaultGoals: SessionGoal[] = [
+      { id: '1', text: 'Tóm tắt phương pháp đổi biến Tích phân suy rộng', completed: true },
+      { id: '2', text: 'Giải 3 bài tập tích phân cận vô hạn (loại 1)', completed: false },
+      { id: '3', text: 'Kiểm tra chéo điều kiện hội tụ với hàm Gamma', completed: false }
+    ];
+    const initialSessions: StudySession[] = [
+      {
+        id: 'session-demo-01',
+        user_a_id: STUDENT_A_ID,
+        user_b_id: STUDENT_B_ID,
+        subject: 'MI1111 - Giải tích 1',
+        topic: 'Tích phân suy rộng',
+        scheduled_slot: 'Tối nay 20:00 - 21:00 (T2_TOI)',
+        duration_minutes: 25,
+        user_a_confirmed: true,
+        user_b_confirmed: false,
+        goals_checklist: defaultGoals,
+        resource_id: '11111111-1111-1111-1111-111111111103', // Cẩm nang Tích phân suy rộng
+        external_meet_url: 'https://meet.google.com/hust-studymatch-demo',
+        status: 'upcoming',
+        partner_retention_choice: null,
+        afk_alert_count: 0,
+        created_at: new Date(Date.now() - 7200000).toISOString()
+      }
+    ];
+    localStorage.setItem(KEYS.SESSIONS, JSON.stringify(initialSessions));
+  }
+}
+
+// Chạy khởi tạo ngay
+initStorage();
+
+export const dataService = {
+  // -------------------------------------------------------------
+  // 1. NGƯỜI DÙNG & HỒ SƠ
+  // -------------------------------------------------------------
+  async getCurrentUser(): Promise<UserProfile> {
+    if (isSupabaseConfigured() && supabase) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+          if (profile) return profile as UserProfile;
+        }
+      } catch (err) {
+        console.warn('Supabase query failed, falling back to local mock', err);
+      }
+    }
+
+    const activeId = localStorage.getItem(KEYS.ACTIVE_USER_ID) || STUDENT_A_ID;
+    const profiles = this.getAllLocalProfiles();
+    const found = profiles.find(p => p.id === activeId);
+    return found || profiles[0];
+  },
+
+  getAllLocalProfiles(): UserProfile[] {
+    try {
+      const data = localStorage.getItem(KEYS.PROFILES);
+      return data ? JSON.parse(data) : MOCK_PROFILES;
+    } catch {
+      return MOCK_PROFILES;
+    }
+  },
+
+  async switchUserRole(role: 'A' | 'B' | string): Promise<UserProfile> {
+    let targetId = role;
+    if (role === 'A') targetId = STUDENT_A_ID;
+    if (role === 'B') targetId = STUDENT_B_ID;
+
+    localStorage.setItem(KEYS.ACTIVE_USER_ID, targetId);
+    return this.getCurrentUser();
+  },
+
+  async updateProfile(updates: Partial<UserProfile>): Promise<UserProfile> {
+    const currentUser = await this.getCurrentUser();
+    const updated: UserProfile = { ...currentUser, ...updates, updated_at: new Date().toISOString() };
+
+    if (isSupabaseConfigured() && supabase) {
+      try {
+        await supabase.from('profiles').update(updates).eq('id', currentUser.id);
+      } catch (err) {
+        console.warn('Supabase updateProfile error', err);
+      }
+    }
+
+    const profiles = this.getAllLocalProfiles().map(p => (p.id === currentUser.id ? updated : p));
+    localStorage.setItem(KEYS.PROFILES, JSON.stringify(profiles));
+    return updated;
+  },
+
+  async loginWithGoogle(): Promise<{ success: boolean; user?: UserProfile; error?: string }> {
+    if (isSupabaseConfigured() && supabase) {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin }
+      });
+      if (error) return { success: false, error: error.message };
+      return { success: true };
+    }
+
+    // Chế độ Demo: Mô phỏng đăng nhập 1-click thành công với hồ sơ Sinh viên A
+    await this.switchUserRole('A');
+    const user = await this.getCurrentUser();
+    return { success: true, user };
+  },
+
+  // -------------------------------------------------------------
+  // 2. GHÉP BẠN HỌC (SMART MATCH)
+  // -------------------------------------------------------------
+  async getMatchingCandidates(weights: MatchingWeights = DEFAULT_WEIGHTS): Promise<MatchCandidate[]> {
+    const currentUser = await this.getCurrentUser();
+    const blockedIds = this.getBlockedUserIds();
+
+    if (isSupabaseConfigured() && supabase) {
+      try {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('*')
+          .neq('id', currentUser.id);
+        if (profiles && profiles.length > 0) {
+          return rankMatchingCandidates(currentUser, profiles as UserProfile[], blockedIds, weights);
+        }
+      } catch (err) {
+        console.warn('Supabase candidates query failed', err);
+      }
+    }
+
+    const allProfiles = this.getAllLocalProfiles();
+    return rankMatchingCandidates(currentUser, allProfiles, blockedIds, weights);
+  },
+
+  async sendMatchInvite(
+    targetUserId: string,
+    score: number,
+    reason: string
+  ): Promise<{ success: boolean; error?: string; limitReached?: boolean }> {
+    const currentUser = await this.getCurrentUser();
+
+    // Kiểm tra giới hạn gói Free: Tối đa 3 lời mời
+    if (currentUser.plan_tier === 'free' && currentUser.free_invites_used >= 3) {
+      return {
+        success: false,
+        limitReached: true,
+        error: 'Bạn đã dùng hết 3 lượt gửi lời mời miễn phí của gói Free. Vui lòng nâng cấp gói Mùa Thi hoặc Plus để tiếp tục!'
+      };
+    }
+
+    const newRequest: MatchRequest = {
+      id: `req-${Date.now()}`,
+      sender_id: currentUser.id,
+      receiver_id: targetUserId,
+      compatibility_score: score,
+      match_reason: reason,
+      status: 'pending',
+      created_at: new Date().toISOString()
+    };
+
+    if (isSupabaseConfigured() && supabase) {
+      try {
+        await supabase.from('match_requests').insert({
+          sender_id: currentUser.id,
+          receiver_id: targetUserId,
+          compatibility_score: score,
+          match_reason: reason,
+          status: 'pending'
+        });
+      } catch (err) {
+        console.warn('Supabase match_requests insert error', err);
+      }
+    }
+
+    // Cập nhật số lượt mời đã dùng
+    await this.updateProfile({ free_invites_used: currentUser.free_invites_used + 1 });
+
+    const requests = this.getLocalRequests();
+    requests.push(newRequest);
+    localStorage.setItem(KEYS.MATCH_REQUESTS, JSON.stringify(requests));
+
+    return { success: true };
+  },
+
+  getLocalRequests(): MatchRequest[] {
+    try {
+      const data = localStorage.getItem(KEYS.MATCH_REQUESTS);
+      return data ? JSON.parse(data) : [];
+    } catch {
+      return [];
+    }
+  },
+
+  async getPendingInvites(): Promise<MatchRequest[]> {
+    const currentUser = await this.getCurrentUser();
+    const profiles = this.getAllLocalProfiles();
+
+    if (isSupabaseConfigured() && supabase) {
+      try {
+        const { data: reqs } = await supabase
+          .from('match_requests')
+          .select('*, sender_profile:profiles!sender_id(*)')
+          .eq('receiver_id', currentUser.id)
+          .eq('status', 'pending');
+        if (reqs) return reqs as MatchRequest[];
+      } catch (err) {
+        console.warn('Supabase pending invites failed', err);
+      }
+    }
+
+    const reqs = this.getLocalRequests().filter(
+      r => r.receiver_id === currentUser.id && r.status === 'pending'
+    );
+    return reqs.map(r => ({
+      ...r,
+      sender_profile: profiles.find(p => p.id === r.sender_id)
+    }));
+  },
+
+  async respondToInvite(requestId: string, accept: boolean): Promise<StudySession | null> {
+    const currentUser = await this.getCurrentUser();
+    const requests = this.getLocalRequests();
+    const req = requests.find(r => r.id === requestId);
+    if (!req) return null;
+
+    req.status = accept ? 'accepted' : 'rejected';
+    localStorage.setItem(KEYS.MATCH_REQUESTS, JSON.stringify(requests));
+
+    if (!accept) return null;
+
+    // Tự động sinh phiên học nháp vào study_sessions
+    const sender = this.getAllLocalProfiles().find(p => p.id === req.sender_id);
+    const matchedSubject = currentUser.priority_subject || (sender ? sender.priority_subject : 'MI1111 - Giải tích 1');
+    const topic = (currentUser.weak_topics[0] || (sender?.strong_topics[0]) || 'Ôn tập tổng quát');
+
+    const newSession: StudySession = {
+      id: `session-${Date.now()}`,
+      user_a_id: req.sender_id,
+      user_b_id: currentUser.id,
+      subject: matchedSubject,
+      topic,
+      scheduled_slot: 'Tối mai 20:00 - 21:00',
+      duration_minutes: 25,
+      user_a_confirmed: true,
+      user_b_confirmed: true,
+      goals_checklist: [
+        { id: '1', text: `Tóm tắt các dạng bài trọng tâm về ${topic}`, completed: false },
+        { id: '2', text: 'Cùng giải 3 bài tập mẫu trong ngân hàng đề', completed: false },
+        { id: '3', text: 'Đối soát lời giải và hướng dẫn chéo', completed: false }
+      ],
+      resource_id: '11111111-1111-1111-1111-111111111101',
+      external_meet_url: 'https://meet.google.com/studymatch-live',
+      status: 'upcoming',
+      partner_retention_choice: null,
+      afk_alert_count: 0,
+      created_at: new Date().toISOString()
+    };
+
+    const sessions = this.getLocalSessions();
+    sessions.unshift(newSession);
+    localStorage.setItem(KEYS.SESSIONS, JSON.stringify(sessions));
+
+    return newSession;
+  },
+
+  // -------------------------------------------------------------
+  // 3. PHÒNG HỌC CAM KẾT (STUDY SESSIONS)
+  // -------------------------------------------------------------
+  getLocalSessions(): StudySession[] {
+    try {
+      const data = localStorage.getItem(KEYS.SESSIONS);
+      return data ? JSON.parse(data) : [];
+    } catch {
+      return [];
+    }
+  },
+
+  async getUpcomingSession(): Promise<StudySession | null> {
+    const currentUser = await this.getCurrentUser();
+    const profiles = this.getAllLocalProfiles();
+    const sessions = this.getLocalSessions().filter(
+      s => (s.user_a_id === currentUser.id || s.user_b_id === currentUser.id) && s.status === 'upcoming'
+    );
+    if (sessions.length === 0) return null;
+
+    const s = sessions[0];
+    const partnerId = s.user_a_id === currentUser.id ? s.user_b_id : s.user_a_id;
+    return {
+      ...s,
+      partner_profile: profiles.find(p => p.id === partnerId)
+    };
+  },
+
+  async getAllSessions(): Promise<StudySession[]> {
+    const currentUser = await this.getCurrentUser();
+    const profiles = this.getAllLocalProfiles();
+    return this.getLocalSessions()
+      .filter(s => s.user_a_id === currentUser.id || s.user_b_id === currentUser.id)
+      .map(s => ({
+        ...s,
+        partner_profile: profiles.find(p => p.id === (s.user_a_id === currentUser.id ? s.user_b_id : s.user_a_id))
+      }));
+  },
+
+  async confirmAttendance(sessionId: string, userKey: 'user_a' | 'user_b'): Promise<StudySession> {
+    const sessions = this.getLocalSessions();
+    const session = sessions.find(s => s.id === sessionId);
+    if (!session) throw new Error('Session not found');
+
+    if (userKey === 'user_a') session.user_a_confirmed = true;
+    else session.user_b_confirmed = true;
+
+    localStorage.setItem(KEYS.SESSIONS, JSON.stringify(sessions));
+    return session;
+  },
+
+  async toggleSessionGoal(sessionId: string, goalId: string): Promise<StudySession> {
+    const sessions = this.getLocalSessions();
+    const session = sessions.find(s => s.id === sessionId);
+    if (!session) throw new Error('Session not found');
+
+    session.goals_checklist = session.goals_checklist.map(g =>
+      g.id === goalId ? { ...g, completed: !g.completed } : g
+    );
+
+    localStorage.setItem(KEYS.SESSIONS, JSON.stringify(sessions));
+
+    // Phát tín hiệu broadcast đồng bộ sang tab khác
+    this.broadcastEvent({ type: 'GOAL_TOGGLED', sessionId, goalId });
+    return session;
+  },
+
+  async attachResourceToSession(sessionId: string, resourceId: string): Promise<void> {
+    const sessions = this.getLocalSessions();
+    const session = sessions.find(s => s.id === sessionId);
+    if (session) {
+      session.resource_id = resourceId;
+      localStorage.setItem(KEYS.SESSIONS, JSON.stringify(sessions));
+    }
+  },
+
+  async completeSession(
+    sessionId: string,
+    retentionChoice: 'keep' | 'change'
+  ): Promise<{ completed: boolean; refundedAmount: number; streak: number }> {
+    const sessions = this.getLocalSessions();
+    const session = sessions.find(s => s.id === sessionId);
+    if (!session) throw new Error('Session not found');
+
+    session.status = 'completed';
+    session.partner_retention_choice = retentionChoice;
+    localStorage.setItem(KEYS.SESSIONS, JSON.stringify(sessions));
+
+    // Hoàn trả 100% tiền cọc (50.000đ), tăng streak và tổng giờ học
+    const currentUser = await this.getCurrentUser();
+    const newStreak = currentUser.streak_days + 1;
+    const addedMinutes = session.duration_minutes || 25;
+    await this.updateProfile({
+      streak_days: newStreak,
+      total_study_minutes: currentUser.total_study_minutes + addedMinutes
+    });
+
+    this.broadcastEvent({ type: 'SESSION_COMPLETED', sessionId });
+
+    return {
+      completed: true,
+      refundedAmount: 50000,
+      streak: newStreak
+    };
+  },
+
+  async reportMissedSession(sessionId: string): Promise<{ penalty: number; compensatedToPartner: number }> {
+    const sessions = this.getLocalSessions();
+    const session = sessions.find(s => s.id === sessionId);
+    if (!session) throw new Error('Session not found');
+
+    session.status = 'missed';
+    localStorage.setItem(KEYS.SESSIONS, JSON.stringify(sessions));
+
+    // Trừ 10.000đ tiền cọc của người bùng: 5.000đ đền bù cho bạn học, 5.000đ phí vận hành
+    const currentUser = await this.getCurrentUser();
+    const newDeposit = Math.max(0, currentUser.commitment_deposit - 10000);
+    await this.updateProfile({ commitment_deposit: newDeposit });
+
+    // Tăng tiền đền bù cho bạn học
+    const partnerId = session.user_a_id === currentUser.id ? session.user_b_id : session.user_a_id;
+    const profiles = this.getAllLocalProfiles().map(p => {
+      if (p.id === partnerId) {
+        return { ...p, commitment_deposit: p.commitment_deposit + 5000 };
+      }
+      return p;
+    });
+    localStorage.setItem(KEYS.PROFILES, JSON.stringify(profiles));
+
+    // Ghi nhận phí vận hành nền tảng
+    const currentFee = Number(localStorage.getItem(KEYS.COMMISSION_FEE) || '0');
+    localStorage.setItem(KEYS.COMMISSION_FEE, String(currentFee + 5000));
+
+    this.broadcastEvent({ type: 'SESSION_MISSED', sessionId });
+
+    return {
+      penalty: 10000,
+      compensatedToPartner: 5000
+    };
+  },
+
+  async logAfkAlert(sessionId: string): Promise<number> {
+    const sessions = this.getLocalSessions();
+    const session = sessions.find(s => s.id === sessionId);
+    if (!session) return 0;
+    session.afk_alert_count = (session.afk_alert_count || 0) + 1;
+    localStorage.setItem(KEYS.SESSIONS, JSON.stringify(sessions));
+    return session.afk_alert_count;
+  },
+
+  // -------------------------------------------------------------
+  // 4. THƯ VIỆN TÀI LIỆU (RESOURCES)
+  // -------------------------------------------------------------
+  async getResources(
+    subjectFilter?: string,
+    topicFilter?: string,
+    typeFilter?: string
+  ): Promise<ResourceItem[]> {
+    let list: ResourceItem[] = [];
+    try {
+      const data = localStorage.getItem(KEYS.RESOURCES);
+      list = data ? JSON.parse(data) : MOCK_RESOURCES;
+    } catch {
+      list = MOCK_RESOURCES;
+    }
+
+    const savedIds = await this.getSavedResourceIds();
+    list = list.map(r => ({
+      ...r,
+      is_saved: savedIds.includes(r.id)
+    }));
+
+    if (subjectFilter && subjectFilter !== 'ALL') {
+      list = list.filter(r => r.subject.includes(subjectFilter) || subjectFilter.includes(r.subject));
+    }
+    if (topicFilter && topicFilter !== 'ALL') {
+      list = list.filter(r => r.topic === topicFilter);
+    }
+    if (typeFilter && typeFilter !== 'ALL') {
+      list = list.filter(r => r.resource_type === typeFilter);
+    }
+
+    return list;
+  },
+
+  async getSavedResourceIds(): Promise<string[]> {
+    try {
+      const data = localStorage.getItem(KEYS.SAVED_RESOURCES);
+      return data ? JSON.parse(data) : [];
+    } catch {
+      return [];
+    }
+  },
+
+  async toggleBookmarkResource(resourceId: string): Promise<boolean> {
+    const saved = await this.getSavedResourceIds();
+    let isSavedNow = false;
+    let nextSaved: string[] = [];
+
+    if (saved.includes(resourceId)) {
+      nextSaved = saved.filter(id => id !== resourceId);
+      isSavedNow = false;
+    } else {
+      nextSaved = [...saved, resourceId];
+      isSavedNow = true;
+    }
+
+    localStorage.setItem(KEYS.SAVED_RESOURCES, JSON.stringify(nextSaved));
+    return isSavedNow;
+  },
+
+  // -------------------------------------------------------------
+  // 5. DOANH THU & THEO DÕI FAKE DOOR TEST (PAYMENTS)
+  // -------------------------------------------------------------
+  async trackPaymentClick(planCode: 'plus_29k' | 'sprint_19k', amount: number): Promise<PaymentEvent> {
+    const currentUser = await this.getCurrentUser();
+    const event: PaymentEvent = {
+      id: `pay-${Date.now()}`,
+      user_id: currentUser.id,
+      plan_code: planCode,
+      amount,
+      user_confirmed_transfer: false,
+      clicked_at: new Date().toISOString()
+    };
+
+    if (isSupabaseConfigured() && supabase) {
+      try {
+        await supabase.from('payment_events').insert({
+          user_id: currentUser.id,
+          plan_code: planCode,
+          amount,
+          user_confirmed_transfer: false
+        });
+      } catch (err) {
+        console.warn('Supabase payment event insert error', err);
+      }
+    }
+
+    const events = this.getLocalPaymentEvents();
+    events.unshift(event);
+    localStorage.setItem(KEYS.PAYMENTS, JSON.stringify(events));
+
+    return event;
+  },
+
+  async confirmPayment(eventId: string): Promise<void> {
+    const events = this.getLocalPaymentEvents();
+    const ev = events.find(e => e.id === eventId);
+    if (ev) {
+      ev.user_confirmed_transfer = true;
+      localStorage.setItem(KEYS.PAYMENTS, JSON.stringify(events));
+
+      // Nâng cấp gói người dùng tương ứng
+      const targetTier = ev.plan_code === 'plus_29k' ? 'plus' : 'sprint';
+      await this.updateProfile({ plan_tier: targetTier });
+    }
+  },
+
+  getLocalPaymentEvents(): PaymentEvent[] {
+    try {
+      const data = localStorage.getItem(KEYS.PAYMENTS);
+      return data ? JSON.parse(data) : [];
+    } catch {
+      return [];
+    }
+  },
+
+  async getStartupMetrics(): Promise<{
+    totalClicks: number;
+    confirmedTransfers: number;
+    conversionRate: number;
+    totalRevenue: number;
+  }> {
+    const events = this.getLocalPaymentEvents();
+    const totalClicks = events.length;
+    const confirmed = events.filter(e => e.user_confirmed_transfer);
+    const confirmedTransfers = confirmed.length;
+    const conversionRate = totalClicks > 0 ? Math.round((confirmedTransfers / totalClicks) * 100) : 0;
+    const totalRevenue = confirmed.reduce((acc, curr) => acc + curr.amount, 0);
+
+    return {
+      totalClicks,
+      confirmedTransfers,
+      conversionRate,
+      totalRevenue
+    };
+  },
+
+  // -------------------------------------------------------------
+  // 6. AN TOÀN & BÁO CÁO / CHẶN (SAFETY)
+  // -------------------------------------------------------------
+  getBlockedUserIds(): string[] {
+    try {
+      const data = localStorage.getItem(KEYS.BLOCKED);
+      return data ? JSON.parse(data) : [];
+    } catch {
+      return [];
+    }
+  },
+
+  async reportOrBlockUser(targetUserId: string, action: 'report' | 'block', reason: string): Promise<void> {
+    const currentUser = await this.getCurrentUser();
+    const report: SafetyReport = {
+      id: `rep-${Date.now()}`,
+      reporter_id: currentUser.id,
+      reported_user_id: targetUserId,
+      action_type: action,
+      reason,
+      created_at: new Date().toISOString()
+    };
+
+    if (action === 'block') {
+      const blocked = this.getBlockedUserIds();
+      if (!blocked.includes(targetUserId)) {
+        blocked.push(targetUserId);
+        localStorage.setItem(KEYS.BLOCKED, JSON.stringify(blocked));
+      }
+    }
+
+    try {
+      const raw = localStorage.getItem(KEYS.REPORTS);
+      const reports: SafetyReport[] = raw ? JSON.parse(raw) : [];
+      reports.push(report);
+      localStorage.setItem(KEYS.REPORTS, JSON.stringify(reports));
+    } catch (e) {
+      console.warn('Error saving report', e);
+    }
+  },
+
+  // -------------------------------------------------------------
+  // 7. REALTIME BROADCAST DÀNH CHO BẢNG TRẮNG & PHÒNG HỌC
+  // -------------------------------------------------------------
+  broadcastChannel: typeof window !== 'undefined' && 'BroadcastChannel' in window
+    ? new BroadcastChannel('studymatch_realtime_mesh')
+    : null,
+
+  broadcastEvent(event: any) {
+    if (this.broadcastChannel) {
+      try {
+        this.broadcastChannel.postMessage(event);
+      } catch (err) {
+        console.warn('BroadcastChannel error', err);
+      }
+    }
+  },
+
+  subscribeToBroadcast(callback: (event: any) => void): () => void {
+    if (!this.broadcastChannel) return () => {};
+    const handler = (e: MessageEvent) => callback(e.data);
+    this.broadcastChannel.addEventListener('message', handler);
+    return () => this.broadcastChannel?.removeEventListener('message', handler);
+  }
+};

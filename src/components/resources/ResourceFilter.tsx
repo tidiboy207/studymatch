@@ -1,0 +1,103 @@
+import React from 'react';
+import { SUBJECTS_CATALOG } from '../../data/subjectsCatalog';
+import { Filter, BookOpen, Layers, FileText } from 'lucide-react';
+
+interface ResourceFilterProps {
+  selectedSubject: string;
+  selectedTopic: string;
+  selectedType: string;
+  onSelectSubject: (sub: string) => void;
+  onSelectTopic: (top: string) => void;
+  onSelectType: (type: string) => void;
+}
+
+export const ResourceFilter: React.FC<ResourceFilterProps> = ({
+  selectedSubject,
+  selectedTopic,
+  selectedType,
+  onSelectSubject,
+  onSelectTopic,
+  onSelectType
+}) => {
+  const currentSubjectObj = SUBJECTS_CATALOG.find(s => s.fullName === selectedSubject);
+  const availableTopics = currentSubjectObj ? currentSubjectObj.topics : [];
+
+  const types = ['ALL', 'Ghi chú', 'Bài tập', 'Đề ôn tập'];
+
+  return (
+    <div className="p-4 sm:p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
+      <div className="flex items-center gap-2 text-xs font-bold text-slate-300 uppercase tracking-wider">
+        <Filter className="w-4 h-4 text-indigo-400" />
+        <span>Bộ lọc 3 cấp độ: Môn học → Chủ đề → Loại tài liệu</span>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        
+        {/* Cấp 1: Môn học */}
+        <div>
+          <label className="block text-[11px] font-semibold text-slate-400 mb-1 flex items-center gap-1">
+            <BookOpen className="w-3.5 h-3.5 text-indigo-400" />
+            1. Môn học
+          </label>
+          <select
+            value={selectedSubject}
+            onChange={(e) => {
+              onSelectSubject(e.target.value);
+              onSelectTopic('ALL');
+            }}
+            className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:outline-none focus:border-indigo-500"
+          >
+            <option value="ALL">Tất cả 3 môn đại cương</option>
+            {SUBJECTS_CATALOG.map(s => (
+              <option key={s.code} value={s.fullName}>{s.fullName}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Cấp 2: Chủ đề / Chương */}
+        <div>
+          <label className="block text-[11px] font-semibold text-slate-400 mb-1 flex items-center gap-1">
+            <Layers className="w-3.5 h-3.5 text-emerald-400" />
+            2. Chương / Chủ đề
+          </label>
+          <select
+            value={selectedTopic}
+            onChange={(e) => onSelectTopic(e.target.value)}
+            disabled={selectedSubject === 'ALL'}
+            className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:outline-none focus:border-indigo-500 disabled:opacity-50"
+          >
+            <option value="ALL">Tất cả các chương</option>
+            {availableTopics.map(t => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Cấp 3: Loại tài liệu */}
+        <div>
+          <label className="block text-[11px] font-semibold text-slate-400 mb-1 flex items-center gap-1">
+            <FileText className="w-3.5 h-3.5 text-amber-400" />
+            3. Loại tài liệu
+          </label>
+          <div className="flex gap-1.5">
+            {types.map(t => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => onSelectType(t)}
+                className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  selectedType === t
+                    ? 'bg-indigo-600 text-white shadow'
+                    : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
+                }`}
+              >
+                {t === 'ALL' ? 'Tất cả' : t}
+              </button>
+            ))}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+};

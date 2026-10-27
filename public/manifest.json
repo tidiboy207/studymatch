@@ -1,0 +1,28 @@
+{
+  "name": "StudyMatch — Ghép Đôi Bạn Học Bù Trừ Năng Lực",
+  "short_name": "StudyMatch",
+  "description": "Nền tảng tự động ghép bạn học bù trừ năng lực & phòng học cam kết kỷ luật dành cho sinh viên Việt Nam",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#4f46e5",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
