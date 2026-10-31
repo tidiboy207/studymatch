@@ -5,7 +5,7 @@ import { Check, Zap, Sparkles, ShieldCheck, ArrowRight } from 'lucide-react';
 interface PricingTierCardsProps {
   currentTier: PlanTier;
   freeInvitesUsed: number;
-  onSelectPlan: (planCode: 'plus_29k' | 'sprint_19k', amount: number) => void;
+  onSelectPlan: (planCode: 'plus_59k' | 'sprint_29k', amount: number) => void;
   onOpenStartupMetrics: () => void;
 }
 
@@ -85,18 +85,18 @@ export const PricingTierCards: React.FC<PricingTierCardsProps> = ({
           </div>
         </div>
 
-        {/* TIER 2: SPRINT PASS (19.000đ / 2 tuần) */}
+        {/* TIER 2: SPRINT PASS (29.000đ / 2 tuần) */}
         <div className={`rounded-3xl bg-slate-900 border p-6 flex flex-col justify-between transition-all relative ${
-          currentTier === 'sprint' ? 'border-indigo-500 shadow-xl shadow-indigo-500/10' : 'border-indigo-500/40 hover:border-indigo-500'
+          currentTier === 'sprint' ? 'border-[#5B46F6] shadow-xl shadow-indigo-500/10' : 'border-[#5B46F6]/40 hover:border-[#5B46F6]'
         }`}>
-          <div className="absolute -top-3 left-6 px-3 py-0.5 rounded-full bg-indigo-600 text-[10px] font-extrabold text-white uppercase tracking-wider shadow">
-            Cấp Tốc Mùa Thi
+          <div className="absolute -top-3 left-6 px-3 py-0.5 rounded-full bg-[#5B46F6] text-[10px] font-extrabold text-white uppercase tracking-wider shadow">
+            CẤP TỐC MÙA THI
           </div>
 
           <div>
-            <div className="text-xs font-bold uppercase tracking-wider text-indigo-400">Pass Mùa Thi (Sprint)</div>
+            <div className="text-xs font-bold uppercase tracking-wider text-indigo-400">PASS MÙA THI (SPRINT)</div>
             <div className="mt-2 flex items-baseline gap-1">
-              <span className="text-3xl font-black text-white font-mono">19.000đ</span>
+              <span className="text-3xl font-black text-white font-mono">29.000đ</span>
               <span className="text-xs text-slate-400">/ 2 tuần cao điểm</span>
             </div>
             <p className="text-xs text-slate-300 mt-2">
@@ -125,28 +125,28 @@ export const PricingTierCards: React.FC<PricingTierCardsProps> = ({
 
           <div className="pt-2">
             <button
-              onClick={() => onSelectPlan('sprint_19k', 19000)}
-              className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md flex items-center justify-center gap-1.5"
+              onClick={() => onSelectPlan('sprint_29k', 29000)}
+              className="w-full py-2.5 rounded-xl bg-[#5B46F6] hover:bg-indigo-600 text-white text-xs font-bold transition-all shadow-md flex items-center justify-center gap-1.5"
             >
-              <span>{currentTier === 'sprint' ? 'Gia hạn gói 19.000đ' : 'Đăng Ký Pass Mùa Thi (19k)'}</span>
+              <span>{currentTier === 'sprint' ? 'Gia hạn gói 29.000đ' : 'Đăng Ký Pass Mùa Thi (29k)'}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
 
-        {/* TIER 3: STUDYMATCH PLUS (29.000đ / tháng) */}
+        {/* TIER 3: STUDYMATCH PLUS (59.000đ / tháng) */}
         <div className={`rounded-3xl bg-gradient-to-b from-indigo-950/60 to-slate-900 border p-6 flex flex-col justify-between transition-all relative shadow-2xl ${
-          currentTier === 'plus' ? 'border-emerald-500 ring-2 ring-emerald-500/20' : 'border-emerald-500/50 hover:border-emerald-400'
+          currentTier === 'plus' ? 'border-[#10B981] ring-2 ring-emerald-500/20' : 'border-[#10B981]/50 hover:border-emerald-400'
         }`}>
-          <div className="absolute -top-3 left-6 px-3 py-0.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 text-[10px] font-black text-slate-950 uppercase tracking-wider shadow">
-            Khuyên Dùng Nhất
+          <div className="absolute -top-3 left-6 px-3 py-0.5 rounded-full bg-[#10B981] text-[10px] font-black text-slate-950 uppercase tracking-wider shadow">
+            KHUYÊN DÙNG NHẤT
           </div>
 
           <div>
-            <div className="text-xs font-bold uppercase tracking-wider text-emerald-400">StudyMatch Plus</div>
+            <div className="text-xs font-bold uppercase tracking-wider text-emerald-400">STUDYMATCH PLUS</div>
             <div className="mt-2 flex items-baseline gap-1">
-              <span className="text-3xl font-black text-white font-mono">29.000đ</span>
-              <span className="text-xs text-slate-400">/ tháng (~900đ/ngày)</span>
+              <span className="text-3xl font-black text-white font-mono">59.000đ</span>
+              <span className="text-xs text-slate-400">/ tháng (~1.900đ/ngày)</span>
             </div>
             <p className="text-xs text-slate-300 mt-2">
               Dành cho sinh viên quyết tâm đạt GPA 3.2+ để săn học bổng khuyến khích.
@@ -174,12 +174,11 @@ export const PricingTierCards: React.FC<PricingTierCardsProps> = ({
 
           <div className="pt-2">
             <button
-              onClick={() => onSelectPlan('plus_29k', 29000)}
-              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-extrabold transition-all shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-1.5"
+              onClick={() => onSelectPlan('plus_59k', 59000)}
+              className="w-full py-2.5 rounded-xl bg-[#10B981] hover:bg-emerald-600 text-slate-950 font-black text-xs transition-all shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-1.5"
             >
-              <Zap className="w-3.5 h-3.5 text-emerald-200" />
-              <span>{currentTier === 'plus' ? 'Gia hạn Gói Plus' : 'Đăng Ký Gói Plus (29k)'}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <Zap className="w-3.5 h-3.5 text-slate-950 fill-current" />
+              <span>{currentTier === 'plus' ? 'Gia hạn Gói Plus' : '⚡ Đăng Ký Gói Plus (59k) →'}</span>
             </button>
           </div>
         </div>

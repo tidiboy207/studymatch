@@ -11,15 +11,20 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- Lưu trữ hồ sơ học tập và trạng thái cam kết kỷ luật của sinh viên
 CREATE TABLE IF NOT EXISTS public.profiles (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    avatar_url TEXT, -- Ảnh đại diện Google OAuth hoặc tải lên
     display_name TEXT NOT NULL,
     university TEXT NOT NULL DEFAULT 'Đại học Bách khoa Hà Nội (HUST)',
+    major TEXT NOT NULL DEFAULT 'Khoa học dữ liệu & Trí tuệ nhân tạo (Data Science & AI)', -- Ngành học bắt buộc mới
+    bio TEXT NOT NULL DEFAULT '', -- Lời giới thiệu bản thân
+    is_onboarded BOOLEAN NOT NULL DEFAULT false, -- Trạng thái hoàn thành Onboarding lần đầu
     is_edu_verified BOOLEAN NOT NULL DEFAULT false,
     priority_subject TEXT NOT NULL DEFAULT 'MI1111 - Giải tích 1',
+    subjects_detail JSONB NOT NULL DEFAULT '[]'::jsonb, -- Mảng [{subject_id, code, name, fullName, proficiency, strong_topics[], weak_topics[]}]
     weak_topics TEXT[] NOT NULL DEFAULT '{}',
     strong_topics TEXT[] NOT NULL DEFAULT '{}',
     self_level INT NOT NULL DEFAULT 1 CHECK (self_level IN (1, 2, 3)), -- 1 = Mất gốc, 2 = Cơ bản, 3 = Khá muốn ôn sâu
     learning_goal TEXT NOT NULL DEFAULT 'Cùng giải bài tập', -- 'Cùng giải bài tập' | 'Ôn lý thuyết qua môn' | 'Luyện đề đạt A/A+'
-    learning_style TEXT NOT NULL DEFAULT 'Thảo luận sôi nổi', -- 'Thảo luận sôi nổi' | 'Pomodoro yên lặng' | 'Hỏi đáp nhanh phần khó'
+    learning_style TEXT NOT NULL DEFAULT 'Thảo luận sôi nổi', -- 'Thảo luận sôi nổi' | 'Pomodoro yên tĩnh' | 'Hỏi đáp nhanh phần khó'
     free_slots TEXT[] NOT NULL DEFAULT '{"T2_TOI", "T4_TOI", "T6_TOI"}', -- Mã ca: T2_SANG, T2_CHIEU, T2_TOI, ...
     streak_days INT NOT NULL DEFAULT 0,
     total_study_minutes INT NOT NULL DEFAULT 0,

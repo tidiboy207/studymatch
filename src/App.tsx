@@ -15,7 +15,10 @@ import { DEFAULT_WEIGHTS } from './services/matchingEngine';
 // Components
 import { Navbar, NavTab } from './components/layout/Navbar';
 import { Toast, ToastMessage } from './components/layout/Toast';
-import { OnboardingModal } from './components/onboarding/OnboardingModal';
+import { LoginPage } from './components/auth/LoginPage';
+import { OnboardingWizard } from './components/onboarding/OnboardingWizard';
+import { ProfilePage } from './components/profile/ProfilePage';
+import { PublicProfileModal } from './components/profile/PublicProfileModal';
 
 // Dashboard Components
 import { HeroTodayCard } from './components/dashboard/HeroTodayCard';
@@ -46,9 +49,14 @@ import { PersonalStatsView } from './components/pricing/PersonalStatsView';
 import { Sparkles, Users, BookOpen, Video, BarChart3, AlertCircle } from 'lucide-react';
 
 export const App: React.FC = () => {
+  // Authentication & Onboarding state
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => dataService.isUserLoggedIn());
   const [currentTab, setCurrentTab] = useState<NavTab>('dashboard');
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [isSupabaseLive] = useState<boolean>(isSupabaseConfigured());
+
+  // Public Profile Modal State (khi bấm xem chi tiết bạn học từ Smart Match / Tin nhắn)
+  const [selectedPublicProfile, setSelectedPublicProfile] = useState<UserProfile | null>(null);
 
   // Sessions & Invites
   const [upcomingSession, setUpcomingSession] = useState<StudySession | null>(null);
@@ -69,7 +77,7 @@ export const App: React.FC = () => {
   const [selectedType, setSelectedType] = useState<string>('ALL');
   const [selectedResourceDetail, setSelectedResourceDetail] = useState<ResourceItem | null>(null);
 
-  // Pricing & Metrics
+  // Pricing & Metrics (29k / 59k)
   const [activePaymentEvent, setActivePaymentEvent] = useState<PaymentEvent | null>(null);
   const [isPaymentQrOpen, setIsPaymentQrOpen] = useState(false);
   const [isStartupMetricsOpen, setIsStartupMetricsOpen] = useState(false);
@@ -81,8 +89,7 @@ export const App: React.FC = () => {
   });
   const [paymentEvents, setPaymentEvents] = useState<PaymentEvent[]>([]);
 
-  // Modals & Toasts
-  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
+  // Toasts
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   const addToast = (type: 'success' | 'error' | 'info', message: string) => {
@@ -118,11 +125,6 @@ export const App: React.FC = () => {
       setResources(resList);
       setStartupMetrics(metrics);
       setPaymentEvents(pEvents);
-
-      // Tự động mở Onboarding nếu hồ sơ chưa chọn môn hoặc chưa có weak topics
-      if (user.weak_topics.length === 0) {
-        setIsOnboardingOpen(true);
-      }
     } catch (err) {
       console.error('Error loading initial data', err);
     }
@@ -139,7 +141,31 @@ export const App: React.FC = () => {
     }
   }, [currentUser, weights]);
 
-  // Role Switcher Handler
+  // Login handler
+  const handleLoginSuccess = async (user: UserProfile) => {
+    setCurrentUser(user);
+    setIsLoggedIn(true);
+    addToast('success', `Chào mừng ${user.display_name} đến với StudyMatch Matcha Vibe!`);
+    await loadData();
+  };
+
+  // Logout handler
+  const handleLogout = async () => {
+    await dataService.logout();
+    setIsLoggedIn(false);
+    addToast('info', 'Bạn đã đăng xuất khỏi hệ thống.');
+  };
+
+  // Onboarding complete handler
+  const handleOnboardingComplete = async (updated: Partial<UserProfile>) => {
+    const user = await dataService.updateProfile({ ...updated, is_onboarded: true });
+    setCurrentUser(user);
+    addToast('success', 'Thiết lập hồ sơ học tập thành công! Bạn đã sẵn sàng ghép đôi.');
+    setCurrentTab('dashboard');
+    await loadData();
+  };
+
+  // Role Switcher Handler (Demo switch A/B)
   const handleSwitchRole = async (role: 'A' | 'B') => {
     const nextUser = await dataService.switchUserRole(role);
     setCurrentUser(nextUser);
@@ -190,7 +216,6 @@ export const App: React.FC = () => {
         'success',
         `Đã gửi lời mời học cùng cho ${candidate.profile.display_name}! (Đã dùng ${currentUser.free_invites_used + 1}/3 lượt Free)`
       );
-      // Cập nhật lại user profile
       const updatedUser = await dataService.getCurrentUser();
       setCurrentUser(updatedUser);
     } else if (result.error) {
@@ -224,7 +249,6 @@ export const App: React.FC = () => {
         ? 'Đã chặn bạn học này khỏi kết quả ghép đôi.'
         : 'Đã gửi báo cáo vi phạm đến ban quản trị.'
     );
-    // Reload candidates
     const nextCandidates = await dataService.getMatchingCandidates(weights);
     setCandidates(nextCandidates);
   };
@@ -263,14 +287,13 @@ export const App: React.FC = () => {
     setUpcomingSession(updated);
   };
 
-  // Pricing & Fake Door actions
-  const handleSelectPlan = async (planCode: 'plus_29k' | 'sprint_19k', amount: number) => {
+  // Pricing actions: Sprint 29k / Plus 59k
+  const handleSelectPlan = async (planCode: 'plus_59k' | 'sprint_29k', amount: number) => {
     setIsUpgradeLimitModalOpen(false);
     const event = await dataService.trackPaymentClick(planCode, amount);
     setActivePaymentEvent(event);
     setIsPaymentQrOpen(true);
 
-    // Refresh metrics
     const [m, evs] = await Promise.all([
       dataService.getStartupMetrics(),
       dataService.getLocalPaymentEvents()
@@ -293,14 +316,42 @@ export const App: React.FC = () => {
     setPaymentEvents(evs);
   };
 
+  // =========================================================================
+  // ROUTE GUARD: BƯỚC 1 — ĐĂNG NHẬP (LOGIN PAGE)
+  // =========================================================================
+  if (!isLoggedIn) {
+    return (
+      <>
+        <LoginPage onLoginSuccess={handleLoginSuccess} />
+        <Toast toasts={toasts} onRemove={removeToast} />
+      </>
+    );
+  }
+
+  // Loading state
   if (!currentUser) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
+      <div className="min-h-screen flex items-center justify-center bg-[#14221B] text-white">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm font-semibold text-slate-400">Đang khởi tạo hệ thống StudyMatch...</p>
+          <div className="w-10 h-10 border-4 border-[#A7B99A] border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm font-semibold text-[#A7B99A]">Đang khởi tạo không gian StudyMatch Matcha Vibe...</p>
         </div>
       </div>
+    );
+  }
+
+  // =========================================================================
+  // ROUTE GUARD: BƯỚC 2 — ONBOARDING WIZARD CHO TÀI KHOẢN MỚI
+  // =========================================================================
+  if (currentUser.is_onboarded === false) {
+    return (
+      <>
+        <OnboardingWizard
+          currentUser={currentUser}
+          onComplete={handleOnboardingComplete}
+        />
+        <Toast toasts={toasts} onRemove={removeToast} />
+      </>
     );
   }
 
@@ -309,17 +360,21 @@ export const App: React.FC = () => {
     ? resources.find(r => r.id === upcomingSession.resource_id) || null
     : null;
 
+  // =========================================================================
+  // ROUTE GUARD: BƯỚC 3 — DASHBOARD & CÁC PHÂN HỆ
+  // =========================================================================
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-indigo-500 selection:text-white">
+    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-[#365C4A] selection:text-white">
       
-      {/* 1. Global Navigation Bar */}
+      {/* 1. Global Navigation Bar with Matcha Theme */}
       <Navbar
         currentTab={currentTab}
         onSelectTab={setCurrentTab}
         currentUser={currentUser}
         onSwitchRole={handleSwitchRole}
         isSupabaseLive={isSupabaseLive}
-        onOpenProfile={() => setIsOnboardingOpen(true)}
+        onOpenProfile={() => setCurrentTab('profile')}
+        onLogout={handleLogout}
       />
 
       {/* 2. Main Content Area */}
@@ -330,7 +385,6 @@ export const App: React.FC = () => {
            ========================================================================= */}
         {currentTab === 'dashboard' && (
           <div className="space-y-6">
-            {/* Top 3 Vấn Đề Quan Trọng Nhất */}
             <HeroTodayCard
               session={upcomingSession}
               currentUser={currentUser}
@@ -339,14 +393,12 @@ export const App: React.FC = () => {
               onFindPartner={() => setCurrentTab('matching')}
             />
 
-            {/* Lời mời kết bạn đang chờ duyệt */}
             <PendingInvites
               invites={pendingInvites}
               onAccept={handleAcceptInvite}
               onReject={handleRejectInvite}
             />
 
-            {/* Chuỗi Ngày Học (Streak) & Quỹ Cam Kết Kỷ Luật */}
             <StreakFundBadge
               currentUser={currentUser}
               onTopUpDeposit={handleTopUpDeposit}
@@ -356,7 +408,7 @@ export const App: React.FC = () => {
             <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
               <div>
                 <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-indigo-400" />
+                  <Sparkles className="w-4 h-4 text-[#A7B99A]" />
                   <span>Thuật Toán Ghép Đôi Bù Trừ Năng Lực Đang Chờ Bạn</span>
                 </h3>
                 <p className="text-xs text-slate-400 mt-1">
@@ -365,10 +417,10 @@ export const App: React.FC = () => {
               </div>
               <button
                 onClick={() => setCurrentTab('matching')}
-                className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shrink-0 flex items-center gap-1.5"
+                className="px-5 py-2.5 rounded-xl bg-[#365C4A] hover:bg-[#2B4A3B] text-white text-xs font-bold transition-all shadow-md shrink-0 flex items-center gap-1.5"
               >
                 <span>Xem Top Ứng Viên Phù Hợp</span>
-                <span className="font-mono text-[11px] bg-indigo-700 px-1.5 py-0.5 rounded">
+                <span className="font-mono text-[11px] bg-[#264234] px-1.5 py-0.5 rounded">
                   {candidates.slice(0, 3).length}
                 </span>
               </button>
@@ -381,18 +433,16 @@ export const App: React.FC = () => {
            ========================================================================= */}
         {currentTab === 'matching' && (
           <div className="space-y-6">
-            {/* Thanh trượt trọng số C, T, G, L thời gian thực */}
             <WeightSliders
               weights={weights}
               onChangeWeights={setWeights}
               onResetWeights={() => setWeights(DEFAULT_WEIGHTS)}
             />
 
-            {/* Danh sách Top 1 - 3 ứng viên phù hợp nhất */}
             <div>
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <Users className="w-5 h-5 text-indigo-400" />
+                  <Users className="w-5 h-5 text-[#A7B99A]" />
                   <h3 className="text-base font-bold text-white tracking-tight">
                     Top Ứng Viên Bù Trừ Kiến Thức Tốt Nhất ({Math.min(candidates.length, 3)})
                   </h3>
@@ -415,6 +465,7 @@ export const App: React.FC = () => {
                       rank={idx + 1}
                       onSendInvite={handleSendInvite}
                       onReportOrBlock={setSelectedCandidateForSafety}
+                      onViewProfile={(p) => setSelectedPublicProfile(p)}
                       hasSent={sentInviteIds.includes(candidate.profile.id)}
                     />
                   ))}
@@ -429,7 +480,6 @@ export const App: React.FC = () => {
            ========================================================================= */}
         {currentTab === 'resources' && (
           <div className="space-y-6">
-            {/* Bộ lọc 3 cấp độ */}
             <ResourceFilter
               selectedSubject={selectedSubject}
               selectedTopic={selectedTopic}
@@ -439,11 +489,10 @@ export const App: React.FC = () => {
               onSelectType={setSelectedType}
             />
 
-            {/* Danh sách tài liệu chuẩn 15+ */}
             <div>
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <BookOpen className="w-5 h-5 text-indigo-400" />
+                  <BookOpen className="w-5 h-5 text-[#A7B99A]" />
                   <h3 className="text-base font-bold text-white tracking-tight">
                     Tài Liệu Học Tập & Ngân Hàng Quiz Chuẩn Hóa ({resources.length})
                   </h3>
@@ -486,7 +535,7 @@ export const App: React.FC = () => {
               />
             ) : (
               <div className="p-12 rounded-3xl bg-slate-900 border border-slate-800 text-center max-w-lg mx-auto space-y-4">
-                <div className="w-16 h-16 rounded-2xl bg-indigo-600/20 border border-indigo-500/40 flex items-center justify-center mx-auto text-indigo-400">
+                <div className="w-16 h-16 rounded-2xl bg-[#365C4A]/30 border border-[#365C4A]/60 flex items-center justify-center mx-auto text-[#A7B99A]">
                   <Video className="w-8 h-8" />
                 </div>
                 <h3 className="text-lg font-bold text-white">Chưa Có Phiên Học Nào Sẵn Sàng</h3>
@@ -495,7 +544,7 @@ export const App: React.FC = () => {
                 </p>
                 <button
                   onClick={() => setCurrentTab('matching')}
-                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md"
+                  className="px-5 py-2.5 rounded-xl bg-[#365C4A] hover:bg-[#2B4A3B] text-white text-xs font-bold transition-all shadow-md"
                 >
                   Tìm bạn học ngay
                 </button>
@@ -505,14 +554,12 @@ export const App: React.FC = () => {
         )}
 
         {/* =========================================================================
-            PHÂN HỆ 5: TIẾN ĐỘ & BẢNG GIÁ DOANH THU (PROGRESS & PRICING)
+            PHÂN HỆ 5: TIẾN ĐỘ & BẢNG GIÁ DOANH THU (PROGRESS & PRICING: 0đ, 29k, 59k)
            ========================================================================= */}
         {currentTab === 'pricing' && (
           <div className="space-y-8">
-            {/* Banner Neo Giá Tâm Lý (Price Anchoring) */}
             <PriceAnchoringBanner />
 
-            {/* Bảng Giá 3 Gói & Đo Lường Chuyển Đổi Fake Door Test */}
             <PricingTierCards
               currentTier={currentUser.plan_tier}
               freeInvitesUsed={currentUser.free_invites_used}
@@ -520,11 +567,10 @@ export const App: React.FC = () => {
               onOpenStartupMetrics={() => setIsStartupMetricsOpen(true)}
             />
 
-            {/* Thống kê cá nhân thực tế từ bảng study_sessions */}
             <PersonalStatsView
               currentUser={currentUser}
               sessions={allSessions}
-              onBookNext={(partnerId) => {
+              onBookNext={(_partnerId) => {
                 addToast('success', 'Đã đặt lịch hẹn học tiếp cho tuần tới!');
                 setCurrentTab('studyroom');
               }}
@@ -533,22 +579,39 @@ export const App: React.FC = () => {
           </div>
         )}
 
+        {/* =========================================================================
+            PHÂN HỆ 6: HỒ SƠ HỌC TẬP CÁ NHÂN (PROFILE: VIEW & EDIT MODE)
+           ========================================================================= */}
+        {currentTab === 'profile' && (
+          <ProfilePage
+            currentUser={currentUser}
+            onSaveProfile={handleSaveProfile}
+            onNavigateToMatching={() => setCurrentTab('matching')}
+          />
+        )}
+
       </main>
 
       {/* 3. Global Footer */}
       <footer className="border-t border-slate-800/80 bg-slate-950 py-6 text-center text-xs text-slate-500 space-y-1">
         <p>StudyMatch © 2026 — Nền tảng tự động ghép đôi bạn học bù trừ năng lực & phòng học cam kết kỷ luật.</p>
         <p className="text-[11px] text-slate-600">
-          Chế độ {isSupabaseLive ? 'Live Supabase (PostgreSQL)' : 'Demo / Mock 0-Config (LocalStorage)'} • PWA Offline Ready
+          Phong cách Matcha Vibe • Chế độ {isSupabaseLive ? 'Live Supabase (PostgreSQL)' : 'Demo / Mock 0-Config (LocalStorage)'} • PWA Offline Ready
         </p>
       </footer>
 
       {/* 4. Global Modals */}
-      <OnboardingModal
-        isOpen={isOnboardingOpen}
-        onClose={() => setIsOnboardingOpen(false)}
+      <PublicProfileModal
+        isOpen={Boolean(selectedPublicProfile)}
+        profile={selectedPublicProfile}
         currentUser={currentUser}
-        onSaveProfile={handleSaveProfile}
+        onClose={() => setSelectedPublicProfile(null)}
+        onSendInvite={(p) => {
+          setSelectedPublicProfile(null);
+          const cand = candidates.find(c => c.profile.id === p.id);
+          if (cand) handleSendInvite(cand);
+        }}
+        hasSentInvite={selectedPublicProfile ? sentInviteIds.includes(selectedPublicProfile.id) : false}
       />
 
       <ResourceDetailModal

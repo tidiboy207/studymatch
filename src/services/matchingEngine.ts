@@ -16,15 +16,36 @@ export function calculateMatchScore(
   // 1. Tiêu chí C: Môn học & Bù trừ kiến thức (0-100)
   let cScore = 0;
   const complementaryTopics: string[] = [];
-  const sameSubject = userA.priority_subject === userB.priority_subject;
+  
+  // Kiểm tra trùng môn qua priority_subject hoặc qua subjects_detail
+  const userASubjectCodes = userA.subjects_detail?.map(s => s.code || s.subject_id) || [];
+  const userBSubjectCodes = userB.subjects_detail?.map(s => s.code || s.subject_id) || [];
+  const sharedCodes = userASubjectCodes.filter(c => userBSubjectCodes.includes(c));
+  
+  const sameSubject = userA.priority_subject === userB.priority_subject || sharedCodes.length > 0;
+  let matchedSubjectName = userA.priority_subject;
 
   if (sameSubject) {
     cScore = 50; // Điểm cơ sở khi cùng môn
     let hasBonus = false;
 
     // (a) Hai người bù trừ trực tiếp: Yếu của A nằm trong Mạnh của B hoặc ngược lại
-    const aWeakInBStrong = userA.weak_topics.filter(t => userB.strong_topics.includes(t));
-    const bWeakInAStrong = userB.weak_topics.filter(t => userA.strong_topics.includes(t));
+    let aWeakInBStrong = userA.weak_topics.filter(t => userB.strong_topics.includes(t));
+    let bWeakInAStrong = userB.weak_topics.filter(t => userA.strong_topics.includes(t));
+
+    // Kiểm tra thêm từ subjects_detail nếu có môn chung
+    if (sharedCodes.length > 0) {
+      const code = sharedCodes[0];
+      const sA = userA.subjects_detail?.find(s => (s.code || s.subject_id) === code);
+      const sB = userB.subjects_detail?.find(s => (s.code || s.subject_id) === code);
+      if (sA && sB) {
+        matchedSubjectName = sA.fullName;
+        const subAWeakInBStrong = sA.weak_topics.filter(t => sB.strong_topics.includes(t));
+        const subBWeakInAStrong = sB.weak_topics.filter(t => sA.strong_topics.includes(t));
+        aWeakInBStrong = [...new Set([...aWeakInBStrong, ...subAWeakInBStrong])];
+        bWeakInAStrong = [...new Set([...bWeakInAStrong, ...subBWeakInAStrong])];
+      }
+    }
 
     if (aWeakInBStrong.length > 0 || bWeakInAStrong.length > 0) {
       hasBonus = true;

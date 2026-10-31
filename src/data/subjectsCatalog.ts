@@ -26,6 +26,32 @@ export const SUBJECTS_CATALOG: SubjectCatalogItem[] = [
     ]
   },
   {
+    code: 'IT3011',
+    name: 'Cấu trúc dữ liệu & Giải thuật',
+    fullName: 'IT3011 - Cấu trúc dữ liệu & Giải thuật',
+    description: 'Môn học nền tảng kỹ thuật lập trình và tư duy thuật toán cốt lõi CNTT',
+    topics: [
+      'Mảng & Danh sách liên kết',
+      'Ngăn xếp & Hàng đợi',
+      'Cây nhị phân & AVL',
+      'Đồ thị (BFS / DFS)',
+      'Quy hoạch động'
+    ]
+  },
+  {
+    code: 'MI2020',
+    name: 'Xác suất & Thống kê',
+    fullName: 'MI2020 - Xác suất & Thống kê',
+    description: 'Xác suất ứng dụng, thống kê mô tả và suy diễn định lượng trong AI & Kinh tế',
+    topics: [
+      'Xác suất cổ điển & Điều kiện',
+      'Biến ngẫu nhiên & Phân phối chuẩn',
+      'Ước lượng tham số',
+      'Kiểm định giả thuyết',
+      'Hồi quy tuyến tính'
+    ]
+  },
+  {
     code: 'CH1015',
     name: 'Hóa học đại cương',
     fullName: 'CH1015 - Hóa học đại cương',
@@ -36,7 +62,64 @@ export const SUBJECTS_CATALOG: SubjectCatalogItem[] = [
       'Động hóa học',
       'Điện hóa học'
     ]
+  },
+  {
+    code: 'PH1110',
+    name: 'Vật lý đại cương 1',
+    fullName: 'PH1110 - Vật lý đại cương 1',
+    description: 'Cơ học chất điểm, cơ học vật rắn và thuyết tương đối',
+    topics: [
+      'Động học chất điểm',
+      'Động lực học hệ chất điểm',
+      'Cơ học vật rắn & Moment',
+      'Dao động & Sóng cơ'
+    ]
+  },
+  {
+    code: 'EM1010',
+    name: 'Kinh tế vi mô',
+    fullName: 'EM1010 - Kinh tế vi mô',
+    description: 'Nguyên lý kinh tế, hành vi người tiêu dùng và cấu trúc thị trường',
+    topics: [
+      'Cung - Cầu & Co giãn',
+      'Lý thuyết tiêu dùng',
+      'Chi phí sản xuất ngắn & dài hạn',
+      'Thị trường cạnh tranh hoàn hảo & Độc quyền'
+    ]
   }
+];
+
+export const MAJORS_CATALOG = [
+  'Khoa học dữ liệu & Trí tuệ nhân tạo (Data Science & AI)',
+  'Công nghệ thông tin (IT)',
+  'Khoa học máy tính (Computer Science)',
+  'Kỹ thuật máy tính (Computer Engineering)',
+  'Kỹ thuật phần mềm (Software Engineering)',
+  'Kỹ thuật điện tử & Viễn thông',
+  'Kỹ thuật điều khiển & Tự động hóa',
+  'Quản trị kinh doanh (Business Administration)',
+  'Kinh tế quốc tế (International Economics)',
+  'Tài chính - Ngân hàng (Finance & Banking)',
+  'Logistics & Quản lý chuỗi cung ứng',
+  'An toàn thông tin (Cybersecurity)',
+  'Kỹ thuật Cơ điện tử',
+  'Thương mại điện tử (E-Commerce)'
+];
+
+export const UNIVERSITIES_CATALOG = [
+  'Đại học Bách khoa Hà Nội (HUST)',
+  'Đại học Ngoại thương (FTU)',
+  'Đại học Kinh tế Quốc dân (NEU)',
+  'Đại học Quốc gia Hà Nội (VNU-HN)',
+  'Học viện Công nghệ Bưu chính Viễn thông (PTIT)',
+  'Đại học Bách khoa - ĐHQG TP.HCM (HCMUT)',
+  'Đại học Kinh tế TP.HCM (UEH)',
+  'Đại học Công nghệ Thông tin - ĐHQG TP.HCM (UIT)',
+  'Đại học Khoa học Tự nhiên - ĐHQG TP.HCM (HCMUS)',
+  'Đại học FPT',
+  'Đại học RMIT Việt Nam',
+  'Đại học Cần Thơ (CTU)',
+  'Đại học Sư phạm Kỹ thuật TP.HCM (HCMUTE)'
 ];
 
 export interface SlotDefinition {
@@ -70,6 +153,63 @@ export function getSlotLabel(code: string): string {
   return `${day} (${shift})`;
 }
 
+/**
+ * Sinh câu tóm tắt lịch rảnh tự nhiên (Natural language availability summary)
+ * Ví dụ: "Rảnh tối Thứ 2, Thứ 4 và chiều Chủ Nhật."
+ */
+export function getAvailabilitySummary(slots: string[]): string {
+  if (!slots || slots.length === 0) {
+    return 'Chưa thiết lập lịch rảnh cố định';
+  }
+
+  // Nhóm theo ca (Sáng, Chiều, Tối)
+  const shiftMap: Record<string, string[]> = {
+    TOI: [],
+    CHIEU: [],
+    SANG: []
+  };
+
+  slots.forEach(slot => {
+    const [day, shift] = slot.split('_');
+    const dayObj = DAYS_OF_WEEK.find(d => d.key === day);
+    if (dayObj && shiftMap[shift]) {
+      shiftMap[shift].push(dayObj.label);
+    }
+  });
+
+  const phrases: string[] = [];
+
+  const shiftLabels: Record<string, string> = {
+    TOI: 'tối',
+    CHIEU: 'chiều',
+    SANG: 'sáng'
+  };
+
+  ['TOI', 'CHIEU', 'SANG'].forEach(key => {
+    const days = shiftMap[key];
+    if (days && days.length > 0) {
+      if (days.length === 1) {
+        phrases.push(`${shiftLabels[key]} ${days[0]}`);
+      } else {
+        const last = days[days.length - 1];
+        const rest = days.slice(0, -1).join(', ');
+        phrases.push(`${shiftLabels[key]} ${rest} & ${last}`);
+      }
+    }
+  });
+
+  if (phrases.length === 0) {
+    return `Rảnh ${slots.length} ca trong tuần`;
+  }
+
+  if (phrases.length === 1) {
+    return `Rảnh ${phrases[0]}.`;
+  }
+
+  const lastPhrase = phrases.pop();
+  return `Rảnh ${phrases.join(', ')} và ${lastPhrase}.`;
+}
+
 export const LEARNING_GOALS = [
   'Cùng giải bài tập',
   'Ôn lý thuyết qua môn',
@@ -78,7 +218,7 @@ export const LEARNING_GOALS = [
 
 export const LEARNING_STYLES = [
   'Thảo luận sôi nổi',
-  'Pomodoro yên lặng',
+  'Pomodoro yên tĩnh',
   'Hỏi đáp nhanh phần khó'
 ];
 

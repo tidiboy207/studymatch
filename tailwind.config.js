@@ -7,6 +7,23 @@ export default {
   theme: {
     extend: {
       colors: {
+        matcha: {
+          forest: '#365C4A',       // Deep Forest Green chủ đạo
+          forestDark: '#264234',
+          forestLight: '#46725D',
+          green: '#A7B99A',        // Matcha Green điểm nhấn/lịch rảnh
+          greenLight: '#C3D4B7',
+          greenSoft: '#E8EFE5',
+          cream: '#F8F5EE',        // Warm Cream nền chính
+          creamDark: '#EBE8DF',    // Kem xám dịu
+          creamMuted: '#DFDACF',
+          caramel: '#D89C57',      // Vàng caramel nhãn/huy hiệu
+          caramelHover: '#C68B45',
+          caramelSoft: '#FAEFDF',
+          espresso: '#553F35',     // Nâu cà phê văn bản/tiêu đề phụ
+          espressoLight: '#7A5E51',
+          espressoMuted: '#8E7366',
+        },
         brand: {
           50: '#eef2ff',
           100: '#e0e7ff',

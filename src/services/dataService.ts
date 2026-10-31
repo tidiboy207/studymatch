@@ -14,15 +14,16 @@ import { MOCK_RESOURCES } from '../data/mockResources';
 import { calculateMatchScore, rankMatchingCandidates, DEFAULT_WEIGHTS } from './matchingEngine';
 import { supabase, isSupabaseConfigured } from './supabaseClient';
 
-// Key LocalStorage
+// Key LocalStorage (v2 nâng cấp Matcha Vibe & Per-Subject Profile)
 const KEYS = {
-  PROFILES: 'studymatch_profiles_v1',
-  ACTIVE_USER_ID: 'studymatch_active_user_id_v1',
+  PROFILES: 'studymatch_profiles_v2',
+  ACTIVE_USER_ID: 'studymatch_active_user_id_v2',
+  AUTH_SESSION: 'studymatch_auth_session_v2',
   RESOURCES: 'studymatch_resources_v1',
   SAVED_RESOURCES: 'studymatch_saved_resources_v1',
   MATCH_REQUESTS: 'studymatch_match_requests_v1',
   SESSIONS: 'studymatch_sessions_v1',
-  PAYMENTS: 'studymatch_payments_v1',
+  PAYMENTS: 'studymatch_payments_v2',
   REPORTS: 'studymatch_reports_v1',
   BLOCKED: 'studymatch_blocked_v1',
   COMMISSION_FEE: 'studymatch_platform_fee_v1'
@@ -35,6 +36,11 @@ function initStorage() {
   }
   if (!localStorage.getItem(KEYS.ACTIVE_USER_ID)) {
     localStorage.setItem(KEYS.ACTIVE_USER_ID, STUDENT_A_ID);
+  }
+  if (!localStorage.getItem(KEYS.AUTH_SESSION)) {
+    // Mặc định cho phiên đầu tiên là đã đăng nhập để người dùng trải nghiệm ngay,
+    // hoặc có thể bấm Đăng xuất bất cứ lúc nào
+    localStorage.setItem(KEYS.AUTH_SESSION, JSON.stringify({ isLoggedIn: true, userId: STUDENT_A_ID }));
   }
   if (!localStorage.getItem(KEYS.RESOURCES)) {
     localStorage.setItem(KEYS.RESOURCES, JSON.stringify(MOCK_RESOURCES));
@@ -50,24 +56,24 @@ function initStorage() {
       {
         id: 'pay-seed-1',
         user_id: STUDENT_B_ID,
-        plan_code: 'plus_29k',
-        amount: 29000,
+        plan_code: 'plus_59k',
+        amount: 59000,
         user_confirmed_transfer: true,
         clicked_at: '2026-10-20T10:15:00Z'
       },
       {
         id: 'pay-seed-2',
         user_id: '88888888-8888-8888-8888-888888888888',
-        plan_code: 'sprint_19k',
-        amount: 19000,
+        plan_code: 'sprint_29k',
+        amount: 29000,
         user_confirmed_transfer: true,
         clicked_at: '2026-10-22T14:30:00Z'
       },
       {
         id: 'pay-seed-3',
         user_id: 'cccccccc-cccc-cccc-cccc-cccccccccccc',
-        plan_code: 'sprint_19k',
-        amount: 19000,
+        plan_code: 'sprint_29k',
+        amount: 29000,
         user_confirmed_transfer: false,
         clicked_at: '2026-10-24T09:00:00Z'
       }
@@ -185,6 +191,17 @@ export const dataService = {
     return updated;
   },
 
+  isUserLoggedIn(): boolean {
+    try {
+      const session = localStorage.getItem(KEYS.AUTH_SESSION);
+      if (!session) return true; // Fallback mặc định
+      const parsed = JSON.parse(session);
+      return Boolean(parsed.isLoggedIn);
+    } catch {
+      return true;
+    }
+  },
+
   async loginWithGoogle(): Promise<{ success: boolean; user?: UserProfile; error?: string }> {
     if (isSupabaseConfigured() && supabase) {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -195,10 +212,75 @@ export const dataService = {
       return { success: true };
     }
 
-    // Chế độ Demo: Mô phỏng đăng nhập 1-click thành công với hồ sơ Sinh viên A
+    // Chế độ Demo: Đăng nhập với tài khoản Google mô phỏng
+    localStorage.setItem(KEYS.AUTH_SESSION, JSON.stringify({ isLoggedIn: true, userId: STUDENT_A_ID }));
     await this.switchUserRole('A');
     const user = await this.getCurrentUser();
     return { success: true, user };
+  },
+
+  async loginWithCredentials(email: string, _password?: string): Promise<{ success: boolean; user?: UserProfile; error?: string }> {
+    const profiles = this.getAllLocalProfiles();
+    const cleanEmail = email.trim().toLowerCase();
+    const found = profiles.find(p => p.email?.toLowerCase() === cleanEmail || cleanEmail.includes(p.display_name.toLowerCase()));
+
+    const targetUser = found || profiles[0];
+    localStorage.setItem(KEYS.ACTIVE_USER_ID, targetUser.id);
+    localStorage.setItem(KEYS.AUTH_SESSION, JSON.stringify({ isLoggedIn: true, userId: targetUser.id }));
+    return { success: true, user: targetUser };
+  },
+
+  async registerWithEmail(
+    email: string,
+    displayName: string,
+    university: string,
+    major: string
+  ): Promise<{ success: boolean; user: UserProfile }> {
+    const isEdu = email.includes('.edu.vn');
+    const newId = `user-${Date.now()}`;
+    const newUser: UserProfile = {
+      id: newId,
+      email,
+      display_name: displayName || email.split('@')[0],
+      university: university || 'Đại học Bách khoa Hà Nội (HUST)',
+      major: major || 'Khoa học dữ liệu & Trí tuệ nhân tạo (Data Science & AI)',
+      bio: '',
+      is_onboarded: false, // Bắt buộc chuyển vào Onboarding Wizard
+      is_edu_verified: isEdu,
+      priority_subject: 'MI1111 - Giải tích 1',
+      subjects_detail: [],
+      weak_topics: [],
+      strong_topics: [],
+      self_level: 1,
+      learning_goal: 'Cùng giải bài tập',
+      learning_style: 'Pomodoro yên tĩnh',
+      free_slots: ['T2_TOI', 'T4_TOI', 'T6_TOI'],
+      streak_days: 1,
+      total_study_minutes: 0,
+      commitment_deposit: 50000,
+      free_invites_used: 0,
+      plan_tier: 'free',
+      created_at: new Date().toISOString()
+    };
+
+    const profiles = this.getAllLocalProfiles();
+    profiles.unshift(newUser);
+    localStorage.setItem(KEYS.PROFILES, JSON.stringify(profiles));
+    localStorage.setItem(KEYS.ACTIVE_USER_ID, newId);
+    localStorage.setItem(KEYS.AUTH_SESSION, JSON.stringify({ isLoggedIn: true, userId: newId }));
+
+    return { success: true, user: newUser };
+  },
+
+  async logout(): Promise<void> {
+    if (isSupabaseConfigured() && supabase) {
+      try {
+        await supabase.auth.signOut();
+      } catch (err) {
+        console.warn('Supabase sign out error', err);
+      }
+    }
+    localStorage.setItem(KEYS.AUTH_SESSION, JSON.stringify({ isLoggedIn: false }));
   },
 
   // -------------------------------------------------------------
@@ -571,7 +653,7 @@ export const dataService = {
   // -------------------------------------------------------------
   // 5. DOANH THU & THEO DÕI FAKE DOOR TEST (PAYMENTS)
   // -------------------------------------------------------------
-  async trackPaymentClick(planCode: 'plus_29k' | 'sprint_19k', amount: number): Promise<PaymentEvent> {
+  async trackPaymentClick(planCode: 'plus_59k' | 'sprint_29k' | 'plus_29k' | 'sprint_19k', amount: number): Promise<PaymentEvent> {
     const currentUser = await this.getCurrentUser();
     const event: PaymentEvent = {
       id: `pay-${Date.now()}`,
@@ -609,8 +691,8 @@ export const dataService = {
       ev.user_confirmed_transfer = true;
       localStorage.setItem(KEYS.PAYMENTS, JSON.stringify(events));
 
-      // Nâng cấp gói người dùng tương ứng
-      const targetTier = ev.plan_code === 'plus_29k' ? 'plus' : 'sprint';
+      // Nâng cấp gói người dùng tương ứng (plus_59k -> plus, sprint_29k -> sprint)
+      const targetTier = (ev.plan_code === 'plus_59k' || ev.plan_code === 'plus_29k') ? 'plus' : 'sprint';
       await this.updateProfile({ plan_tier: targetTier });
     }
   },

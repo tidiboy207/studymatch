@@ -1,21 +1,37 @@
 export type PlanTier = 'free' | 'sprint' | 'plus';
 
+export interface UserSubjectDetail {
+  subject_id: string;      // VD: MI1111
+  code: string;            // VD: MI1111
+  name: string;            // VD: Giải tích 1
+  fullName: string;        // VD: MI1111 - Giải tích 1
+  proficiency: 1 | 2 | 3;  // 1 = Mất gốc / Cần kéo, 2 = Cơ bản / Rèn đề, 3 = Khá giỏi / Ôn sâu
+  strong_topics: string[]; // Chủ đề nắm vững của riêng môn này
+  weak_topics: string[];   // Chủ đề đang yếu của riêng môn này
+}
+
 export interface UserProfile {
   id: string;
+  email?: string;          // Email Google OAuth / tài khoản (Ẩn tuyệt đối trên hồ sơ công khai)
+  avatar_url?: string;     // Ảnh đại diện Google hoặc tải lên
   display_name: string;
   university: string;
+  major?: string;          // Ngành học (BẮT BUỘC MỚI)
+  bio?: string;            // Giới thiệu bản thân (TÍNH NĂNG MỚI)
+  is_onboarded?: boolean;  // Cờ hoàn thành Onboarding lần đầu
   is_edu_verified: boolean;
   priority_subject: string;
+  subjects_detail?: UserSubjectDetail[]; // Danh sách môn học với trình độ & điểm mạnh/yếu riêng biệt
   weak_topics: string[];
   strong_topics: string[];
-  self_level: 1 | 2 | 3; // 1 = Mất gốc, 2 = Cơ bản, 3 = Khá muốn ôn sâu
-  learning_goal: string; // 'Cùng giải bài tập' | 'Ôn lý thuyết qua môn' | 'Luyện đề đạt A/A+'
-  learning_style: string; // 'Thảo luận sôi nổi' | 'Pomodoro yên lặng' | 'Hỏi đáp nhanh phần khó'
-  free_slots: string[]; // ["T2_TOI", "T4_TOI", "T6_TOI"]
+  self_level: 1 | 2 | 3;   // 1 = Mất gốc, 2 = Cơ bản, 3 = Khá muốn ôn sâu (áp dụng tổng quan/fallback)
+  learning_goal: string;   // 'Cùng giải bài tập' | 'Ôn lý thuyết qua môn' | 'Luyện đề đạt A/A+'
+  learning_style: string;  // 'Thảo luận sôi nổi' | 'Pomodoro yên tĩnh' | 'Hỏi đáp nhanh phần khó'
+  free_slots: string[];    // ["T2_TOI", "T4_TOI", "T6_TOI"]
   streak_days: number;
   total_study_minutes: number;
   commitment_deposit: number; // e.g. 50000 VNĐ
-  free_invites_used: number; // Max 3 for free tier
+  free_invites_used: number;  // Max 3 for free tier
   plan_tier: PlanTier;
   created_at?: string;
   updated_at?: string;
@@ -112,7 +128,7 @@ export interface ResourceItem {
 export interface PaymentEvent {
   id: string;
   user_id: string;
-  plan_code: 'plus_29k' | 'sprint_19k';
+  plan_code: 'plus_59k' | 'sprint_29k' | 'plus_29k' | 'sprint_19k';
   amount: number;
   user_confirmed_transfer: boolean;
   clicked_at: string;

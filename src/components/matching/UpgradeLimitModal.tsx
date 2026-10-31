@@ -4,7 +4,7 @@ import { Sparkles, X, ShieldAlert, ArrowRight, Zap, CheckCircle2 } from 'lucide-
 interface UpgradeLimitModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectPlan: (planCode: 'plus_29k' | 'sprint_19k', amount: number) => void;
+  onSelectPlan: (planCode: 'plus_59k' | 'sprint_29k', amount: number) => void;
 }
 
 export const UpgradeLimitModal: React.FC<UpgradeLimitModalProps> = ({
@@ -54,7 +54,7 @@ export const UpgradeLimitModal: React.FC<UpgradeLimitModalProps> = ({
               <div>
                 <div className="text-xs font-bold text-indigo-400 uppercase tracking-wider">Pass Mùa Thi</div>
                 <div className="mt-1 flex items-baseline gap-1">
-                  <span className="text-2xl font-black text-white font-mono">19.000đ</span>
+                  <span className="text-2xl font-black text-white font-mono">29.000đ</span>
                   <span className="text-[11px] text-slate-400">/ 2 tuần</span>
                 </div>
                 <ul className="mt-3 space-y-1.5 text-[11px] text-slate-300">
@@ -69,10 +69,10 @@ export const UpgradeLimitModal: React.FC<UpgradeLimitModalProps> = ({
                 </ul>
               </div>
               <button
-                onClick={() => onSelectPlan('sprint_19k', 19000)}
+                onClick={() => onSelectPlan('sprint_29k', 29000)}
                 className="mt-4 w-full py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-all flex items-center justify-center gap-1.5 shadow"
               >
-                <span>Chọn 19.000đ</span>
+                <span>Chọn 29.000đ</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -85,7 +85,7 @@ export const UpgradeLimitModal: React.FC<UpgradeLimitModalProps> = ({
               <div>
                 <div className="text-xs font-bold text-emerald-400 uppercase tracking-wider">StudyMatch Plus</div>
                 <div className="mt-1 flex items-baseline gap-1">
-                  <span className="text-2xl font-black text-white font-mono">29.000đ</span>
+                  <span className="text-2xl font-black text-white font-mono">59.000đ</span>
                   <span className="text-[11px] text-slate-400">/ tháng</span>
                 </div>
                 <ul className="mt-3 space-y-1.5 text-[11px] text-slate-300">
@@ -99,15 +99,15 @@ export const UpgradeLimitModal: React.FC<UpgradeLimitModalProps> = ({
                   </li>
                   <li className="flex items-center gap-1.5">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    <span>Tải toàn bộ đề ôn tập & Quiz</span>
+                    <span>Mở khóa phòng Pomodoro 50 phút</span>
                   </li>
                 </ul>
               </div>
               <button
-                onClick={() => onSelectPlan('plus_29k', 29000)}
+                onClick={() => onSelectPlan('plus_59k', 59000)}
                 className="mt-4 w-full py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-600/25"
               >
-                <span>Nâng Cấp 29.000đ</span>
+                <span>Nâng Cấp 59.000đ</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
