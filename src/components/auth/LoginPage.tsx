@@ -29,6 +29,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
   const [toast, setToast] = useState<string | null>(null);
   const [activeFeature, setActiveFeature] = useState<number | null>(null);
   const [isRegisterModal, setIsRegisterModal] = useState(false);
+  const [registerName, setRegisterName] = useState('');
   const [registerEmail, setRegisterEmail] = useState('');
 
   const showNotification = (msg: string) => {
@@ -40,17 +41,18 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    const targetEmail = email.trim() || 'duccoi4321@gmail.com';
     setIsLoading(true);
     try {
       const result = await dataService.loginWithCredentials(
-        email || 'duccoi4321@gmail.com',
+        targetEmail,
         password || '123456'
       );
       if (result.success && result.user) {
         showNotification(`Chào mừng ${result.user.display_name} đến với góc học tập StudyMatch! 🍵`);
         setTimeout(() => {
           onLoginSuccess(result.user!);
-        }, 600);
+        }, 500);
       } else {
         showNotification(result.error || 'Đăng nhập không thành công, vui lòng thử lại!');
       }
@@ -63,13 +65,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
+    const targetEmail = email.trim();
     showNotification('Đang đồng bộ lịch học & hồ sơ qua Google Sinh viên... 🍵');
     try {
-      const result = await dataService.loginWithGoogle();
+      const result = await dataService.loginWithGoogle(targetEmail);
       if (result.success && result.user) {
         setTimeout(() => {
           onLoginSuccess(result.user!);
-        }, 700);
+        }, 600);
       }
     } catch (err: any) {
       showNotification('Đăng nhập Google thất bại!');
@@ -80,8 +83,29 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsRegisterModal(false);
-    handleGoogleLogin();
+    const targetEmail = registerEmail.trim() || email.trim();
+    if (!targetEmail) {
+      showNotification('Vui lòng nhập địa chỉ email của bạn!');
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const result = await dataService.registerWithEmail(
+        targetEmail,
+        registerName.trim() || targetEmail.split('@')[0],
+        '',
+        ''
+      );
+      setIsRegisterModal(false);
+      showNotification(`Khởi tạo tài khoản thành công cho ${result.user.display_name}! 🍵`);
+      setTimeout(() => {
+        onLoginSuccess(result.user);
+      }, 500);
+    } catch (err: any) {
+      showNotification('Đăng ký không thành công, vui lòng thử lại!');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -808,12 +832,24 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
             <form onSubmit={handleRegisterSubmit} className="space-y-3.5 pt-1">
               <div className="pill-input-recessed rounded-full px-4 py-3 flex items-center gap-3 border border-[#E2DED3]">
+                <Users className="w-4 h-4 text-[#365C4A]" />
+                <input
+                  type="text"
+                  value={registerName}
+                  onChange={(e) => setRegisterName(e.target.value)}
+                  placeholder="Họ và tên hoặc biệt danh của bạn..."
+                  className="w-full bg-transparent text-xs text-[#23382E] focus:outline-none font-body"
+                />
+              </div>
+
+              <div className="pill-input-recessed rounded-full px-4 py-3 flex items-center gap-3 border border-[#E2DED3]">
                 <Mail className="w-4 h-4 text-[#365C4A]" />
                 <input
                   type="email"
                   value={registerEmail}
                   onChange={(e) => setRegisterEmail(e.target.value)}
-                  placeholder="Nhập email sinh viên của bạn..."
+                  placeholder="Nhập email của bạn (ví dụ: student@hust.edu.vn)..."
+                  required
                   className="w-full bg-transparent text-xs text-[#23382E] focus:outline-none font-body"
                 />
               </div>

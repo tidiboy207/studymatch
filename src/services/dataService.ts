@@ -202,7 +202,7 @@ export const dataService = {
     }
   },
 
-  async loginWithGoogle(): Promise<{ success: boolean; user?: UserProfile; error?: string }> {
+  async loginWithGoogle(inputEmail?: string): Promise<{ success: boolean; user?: UserProfile; error?: string }> {
     if (isSupabaseConfigured() && supabase) {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -212,22 +212,48 @@ export const dataService = {
       return { success: true };
     }
 
-    // Đăng nhập nhanh với tài khoản Google định danh
-    localStorage.setItem(KEYS.AUTH_SESSION, JSON.stringify({ isLoggedIn: true, userId: STUDENT_A_ID }));
-    await this.switchUserRole('A');
-    const user = await this.getCurrentUser();
+    const cleanEmail = (inputEmail || '').trim().toLowerCase();
+
+    // Nếu người dùng có nhập một email trong ô đăng nhập
+    if (cleanEmail) {
+      const profiles = this.getAllLocalProfiles();
+      const existing = profiles.find(p => p.email?.toLowerCase() === cleanEmail);
+      if (existing) {
+        localStorage.setItem(KEYS.ACTIVE_USER_ID, existing.id);
+        localStorage.setItem(KEYS.AUTH_SESSION, JSON.stringify({ isLoggedIn: true, userId: existing.id }));
+        return { success: true, user: existing };
+      }
+      // Nếu email chưa có -> Khởi tạo tài khoản mới mang đúng email này
+      const reg = await this.registerWithEmail(cleanEmail, cleanEmail.split('@')[0], '', '');
+      return { success: true, user: reg.user };
+    }
+
+    // Nếu không nhập gì, kiểm tra người dùng đang lưu hoặc tài khoản mẫu
+    const activeId = localStorage.getItem(KEYS.ACTIVE_USER_ID) || STUDENT_A_ID;
+    const user = this.getAllLocalProfiles().find(p => p.id === activeId) || this.getAllLocalProfiles()[0];
+    localStorage.setItem(KEYS.ACTIVE_USER_ID, user.id);
+    localStorage.setItem(KEYS.AUTH_SESSION, JSON.stringify({ isLoggedIn: true, userId: user.id }));
     return { success: true, user };
   },
 
   async loginWithCredentials(email: string, _password?: string): Promise<{ success: boolean; user?: UserProfile; error?: string }> {
-    const profiles = this.getAllLocalProfiles();
     const cleanEmail = email.trim().toLowerCase();
-    const found = profiles.find(p => p.email?.toLowerCase() === cleanEmail || cleanEmail.includes(p.display_name.toLowerCase()));
+    if (!cleanEmail) {
+      return { success: false, error: 'Vui lòng nhập địa chỉ email!' };
+    }
 
-    const targetUser = found || profiles[0];
-    localStorage.setItem(KEYS.ACTIVE_USER_ID, targetUser.id);
-    localStorage.setItem(KEYS.AUTH_SESSION, JSON.stringify({ isLoggedIn: true, userId: targetUser.id }));
-    return { success: true, user: targetUser };
+    const profiles = this.getAllLocalProfiles();
+    const found = profiles.find(p => p.email?.toLowerCase() === cleanEmail);
+
+    if (found) {
+      localStorage.setItem(KEYS.ACTIVE_USER_ID, found.id);
+      localStorage.setItem(KEYS.AUTH_SESSION, JSON.stringify({ isLoggedIn: true, userId: found.id }));
+      return { success: true, user: found };
+    }
+
+    // Nếu email này chưa từng có trong hệ thống -> Tự động đăng ký tài khoản mới với is_onboarded: false
+    const reg = await this.registerWithEmail(cleanEmail, cleanEmail.split('@')[0], '', '');
+    return { success: true, user: reg.user };
   },
 
   async registerWithEmail(
@@ -236,17 +262,29 @@ export const dataService = {
     university: string,
     major: string
   ): Promise<{ success: boolean; user: UserProfile }> {
-    const isEdu = email.includes('.edu.vn');
+    const cleanEmail = email.trim().toLowerCase();
+    const profiles = this.getAllLocalProfiles();
+
+    // Nếu email này đã tồn tại, dùng lại hồ sơ đó
+    const existing = profiles.find(p => p.email?.toLowerCase() === cleanEmail);
+    if (existing) {
+      localStorage.setItem(KEYS.ACTIVE_USER_ID, existing.id);
+      localStorage.setItem(KEYS.AUTH_SESSION, JSON.stringify({ isLoggedIn: true, userId: existing.id }));
+      return { success: true, user: existing };
+    }
+
+    const isEdu = cleanEmail.includes('.edu.vn');
     const newId = `user-${Date.now()}`;
     const newUser: UserProfile = {
       id: newId,
-      email,
-      display_name: displayName || email.split('@')[0],
+      email: cleanEmail,
+      display_name: displayName || cleanEmail.split('@')[0],
       university: university || 'Đại học Bách khoa Hà Nội (HUST)',
       major: major || 'Khoa học dữ liệu & Trí tuệ nhân tạo (Data Science & AI)',
       bio: '',
       is_onboarded: false, // Bắt buộc chuyển vào Onboarding Wizard
       is_edu_verified: isEdu,
+      avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanEmail}`,
       priority_subject: 'MI1111 - Giải tích 1',
       subjects_detail: [],
       weak_topics: [],
@@ -263,7 +301,6 @@ export const dataService = {
       created_at: new Date().toISOString()
     };
 
-    const profiles = this.getAllLocalProfiles();
     profiles.unshift(newUser);
     localStorage.setItem(KEYS.PROFILES, JSON.stringify(profiles));
     localStorage.setItem(KEYS.ACTIVE_USER_ID, newId);
