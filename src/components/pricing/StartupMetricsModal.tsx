@@ -87,7 +87,7 @@ export const StartupMetricsModal: React.FC<StartupMetricsModalProps> = ({
               <div className="text-2xl font-black text-[#365C4A] font-mono mt-1">
                 {metrics.totalRevenue.toLocaleString()}đ
               </div>
-              <span className="text-[10px] text-emerald-700 font-bold mt-1 block">Gói 29k + 59k</span>
+              <span className="text-[10px] text-emerald-700 font-bold mt-1 block">Gói 19k + 29k</span>
             </div>
 
           </div>
@@ -99,7 +99,7 @@ export const StartupMetricsModal: React.FC<StartupMetricsModalProps> = ({
               <span>Ý nghĩa thực chứng cho mô hình kinh doanh học tập:</span>
             </div>
             <p>
-              • Khảo sát nhu cầu thực tế chứng minh sinh viên Việt Nam sẵn sàng chi trả mức giá vi mô (Micro-subscription 29.000đ – 59.000đ) để bảo vệ điểm GPA và tránh chi phí học lại 2,4 triệu đồng.
+              • Khảo sát nhu cầu thực tế chứng minh sinh viên Việt Nam sẵn sàng chi trả mức giá vi mô (Micro-subscription 19.000đ – 29.000đ) để bảo vệ điểm GPA và tránh chi phí học lại 2,4 triệu đồng.
             </p>
             <p>
               • Tỷ lệ chuyển đổi đạt <strong>{metrics.conversionRate}%</strong> là bằng chứng thực tế về tính khả thi thương mại độc lập.

@@ -1,182 +1,608 @@
 import React, { useState } from 'react';
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Sparkles, Users, Headphones, GraduationCap, Calendar, Check, AlertCircle } from 'lucide-react';
-import { dataService } from '../../services/dataService';
+import {
+  Users,
+  Sparkles,
+  Calendar,
+  BookOpen,
+  Headphones,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  Check,
+  ArrowRight,
+  X
+} from 'lucide-react';
 import { UserProfile } from '../../types';
+import { dataService } from '../../services/dataService';
 
 interface LoginPageProps {
   onLoginSuccess: (user: UserProfile) => void;
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
-  const [isRegisterMode, setIsRegisterMode] = useState(false);
-  const [email, setEmail] = useState('duccoi4321@gmail.com');
-  const [password, setPassword] = useState('123456');
-  const [displayName, setDisplayName] = useState('Đức Còi');
-  const [university, setUniversity] = useState('Đại học Bách khoa Hà Nội (HUST)');
-  const [major, setMajor] = useState('Khoa học máy tính (Computer Science)');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [remember, setRemember] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const [activeFeature, setActiveFeature] = useState<number | null>(null);
+  const [isRegisterModal, setIsRegisterModal] = useState(false);
+  const [registerEmail, setRegisterEmail] = useState('');
 
-  // Xử lý đăng nhập Google
-  const handleGoogleLogin = async () => {
+  const showNotification = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => {
+      setToast(null);
+    }, 3800);
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
     setIsLoading(true);
-    setErrorMsg(null);
     try {
-      const res = await dataService.loginWithGoogle();
-      if (res.success && res.user) {
-        onLoginSuccess(res.user);
-      } else if (res.error) {
-        setErrorMsg(res.error);
+      const result = await dataService.loginWithCredentials(
+        email || 'duccoi4321@gmail.com',
+        password || '123456'
+      );
+      if (result.success && result.user) {
+        showNotification(`Chào mừng ${result.user.display_name} đến với góc học tập StudyMatch! 🍵`);
+        setTimeout(() => {
+          onLoginSuccess(result.user!);
+        }, 600);
+      } else {
+        showNotification(result.error || 'Đăng nhập không thành công, vui lòng thử lại!');
       }
     } catch (err: any) {
-      setErrorMsg(err?.message || 'Đăng nhập Google thất bại');
+      showNotification('Lỗi kết nối máy chủ!');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Xử lý đăng nhập email hoặc tạo tài khoản
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) {
-      setErrorMsg('Vui lòng nhập địa chỉ email');
-      return;
-    }
-
+  const handleGoogleLogin = async () => {
     setIsLoading(true);
-    setErrorMsg(null);
+    showNotification('Đang đồng bộ lịch học & hồ sơ qua Google Sinh viên... 🍵');
     try {
-      if (isRegisterMode) {
-        const res = await dataService.registerWithEmail(email, displayName, university, major);
-        if (res.success) {
-          onLoginSuccess(res.user);
-        }
-      } else {
-        const res = await dataService.loginWithCredentials(email, password);
-        if (res.success && res.user) {
-          onLoginSuccess(res.user);
-        }
+      const result = await dataService.loginWithGoogle();
+      if (result.success && result.user) {
+        setTimeout(() => {
+          onLoginSuccess(result.user!);
+        }, 700);
       }
     } catch (err: any) {
-      setErrorMsg(err?.message || 'Có lỗi xảy ra trong quá trình xử lý');
+      showNotification('Đăng nhập Google thất bại!');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsRegisterModal(false);
+    handleGoogleLogin();
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 lg:p-8 bg-gradient-to-br from-[#EBE8DF] via-[#F3F0E6] to-[#F8F5EE] relative overflow-hidden font-sans select-none">
+    <div className="relative min-h-screen w-full min-w-[1140px] overflow-x-auto overflow-y-hidden bg-[#EFECE6] flex items-center justify-center p-8 select-none">
       
-      {/* Background Ambient Decorative Circles */}
-      <div className="absolute -top-20 -left-20 w-80 h-80 rounded-full bg-[#A7B99A]/20 blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-24 -right-20 w-96 h-96 rounded-full bg-[#D89C57]/15 blur-3xl pointer-events-none" />
-      <div className="absolute top-1/2 left-10 w-48 h-48 rounded-full bg-[#365C4A]/10 blur-2xl pointer-events-none" />
+      {/* Dynamic Keyframes & Specific Styles matching the Google Sites embed 100% */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap');
 
-      {/* Main Login Card (Match reference 100%) */}
-      <div className="max-w-5xl w-full rounded-[28px] shadow-[0_25px_60px_-15px_rgba(54,92,74,0.35)] overflow-hidden bg-white relative flex flex-col md:flex-row border border-[#DCD6C8]/70 z-10">
+        .font-display {
+          font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+        }
+        .font-body {
+          font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        @keyframes floatSlow {
+          0%, 100% {
+            transform: translateY(0px) rotate(0deg);
+          }
+          50% {
+            transform: translateY(-7px) rotate(0.6deg);
+          }
+        }
+
+        @keyframes floatDelayed {
+          0%, 100% {
+            transform: translateY(0px);
+          }
+          50% {
+            transform: translateY(-6px);
+          }
+        }
+
+        @keyframes steamWave {
+          0%, 100% {
+            transform: translateY(0px) translateX(0px) scale(1);
+            opacity: 0.88;
+          }
+          50% {
+            transform: translateY(-8px) translateX(4px) scale(1.02);
+            opacity: 1;
+          }
+        }
+
+        @keyframes aromaRise {
+          0%, 100% {
+            transform: translateY(0px) scale(1);
+            opacity: 0.45;
+          }
+          50% {
+            transform: translateY(-12px) scale(1.08);
+            opacity: 0.85;
+          }
+        }
+
+        .animate-cup-float {
+          animation: floatSlow 6.5s ease-in-out infinite;
+        }
+        .animate-card-float-1 {
+          animation: floatSlow 5.5s ease-in-out infinite;
+        }
+        .animate-card-float-2 {
+          animation: floatDelayed 6.2s ease-in-out 1.2s infinite;
+        }
+        .animate-steam {
+          animation: steamWave 7s ease-in-out infinite;
+        }
+        .animate-aroma {
+          animation: aromaRise 5s ease-in-out infinite;
+        }
+
+        /* Multi-layered 3D Main Card Shadow */
+        .main-card-3d-shadow {
+          box-shadow:
+            0 45px 95px -20px rgba(24, 43, 33, 0.34),
+            0 25px 50px -15px rgba(44, 74, 60, 0.22),
+            0 8px 20px -5px rgba(22, 38, 29, 0.12),
+            0 0 0 1px rgba(255, 255, 255, 0.65);
+        }
+
+        /* High-end Glassmorphism Cards on Matcha Left Side */
+        .glass-feature-card {
+          background: linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.17) 0%,
+            rgba(255, 255, 255, 0.06) 100%
+          );
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border: 1px solid rgba(255, 255, 255, 0.28);
+          box-shadow:
+            0 18px 36px -10px rgba(14, 29, 21, 0.35),
+            0 4px 12px -2px rgba(14, 29, 21, 0.18),
+            inset 0 1px 1px rgba(255, 255, 255, 0.42);
+        }
+        .glass-feature-card:hover {
+          background: linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.24) 0%,
+            rgba(255, 255, 255, 0.10) 100%
+          );
+          border-color: rgba(255, 255, 255, 0.48);
+          transform: translateY(-4px) scale(1.015);
+          box-shadow:
+            0 24px 42px -10px rgba(14, 29, 21, 0.44),
+            inset 0 1px 2px rgba(255, 255, 255, 0.55);
+        }
+
+        /* Recessed Pill Inputs (#EFECE3) */
+        .pill-input-recessed {
+          background-color: #EFECE3;
+          box-shadow:
+            inset 0 2px 5px rgba(44, 62, 52, 0.11),
+            inset 0 1px 2px rgba(44, 62, 52, 0.07),
+            0 1px 0 rgba(255, 255, 255, 0.95);
+        }
+        .pill-input-recessed:focus-within {
+          background-color: #F4F1E9;
+          box-shadow:
+            inset 0 1px 3px rgba(44, 62, 52, 0.05),
+            0 0 0 2.5px rgba(54, 92, 74, 0.32),
+            0 10px 22px -6px rgba(54, 92, 74, 0.15);
+        }
+
+        /* 3D Matcha CTA Button with Multi-layer Shadow */
+        .matcha-cta-button {
+          background: linear-gradient(135deg, #365C4A 0%, #3F5E4F 52%, #2C4A3C 100%);
+          box-shadow:
+            0 14px 28px -6px rgba(44, 74, 60, 0.45),
+            0 6px 14px -3px rgba(44, 74, 60, 0.28),
+            inset 0 1px 1px rgba(255, 255, 255, 0.32);
+        }
+        .matcha-cta-button:hover {
+          background: linear-gradient(135deg, #3D6753 0%, #486B5A 52%, #325444 100%);
+          box-shadow:
+            0 20px 34px -6px rgba(44, 74, 60, 0.55),
+            0 8px 18px -4px rgba(44, 74, 60, 0.34),
+            inset 0 1px 2px rgba(255, 255, 255, 0.45);
+          transform: translateY(-2px);
+        }
+        .matcha-cta-button:active {
+          transform: translateY(0px);
+        }
+      `}</style>
+
+      {/* Ambient background glows */}
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden bg-[#EFECE6]">
+        <div
+          className="absolute -top-36 -left-32 w-[620px] h-[620px] rounded-full blur-[120px] opacity-75"
+          style={{
+            background: 'radial-gradient(circle, rgba(54, 92, 74, 0.28) 0%, rgba(82, 121, 101, 0.12) 55%, transparent 75%)'
+          }}
+        />
+        <div
+          className="absolute -bottom-32 left-[8%] w-[520px] h-[520px] rounded-full blur-[130px] opacity-70"
+          style={{
+            background: 'radial-gradient(circle, rgba(230, 161, 92, 0.26) 0%, rgba(245, 158, 11, 0.10) 55%, transparent 75%)'
+          }}
+        />
+        <div
+          className="absolute -top-28 right-[5%] w-[480px] h-[480px] rounded-full blur-[125px] opacity-65"
+          style={{
+            background: 'radial-gradient(circle, rgba(230, 161, 92, 0.22) 0%, rgba(216, 226, 220, 0.15) 60%, transparent 75%)'
+          }}
+        />
+        <div
+          className="absolute -bottom-36 -right-24 w-[580px] h-[580px] rounded-full blur-[130px] opacity-70"
+          style={{
+            background: 'radial-gradient(circle, rgba(63, 94, 79, 0.22) 0%, rgba(132, 169, 140, 0.10) 55%, transparent 75%)'
+          }}
+        />
+
+        {/* Ambient SVG Waves on entire screen background */}
+        <svg
+          viewBox="0 0 1440 900"
+          preserveAspectRatio="none"
+          className="absolute inset-0 w-full h-full opacity-55"
+        >
+          <path
+            d={`M 0,0 L 790,0
+               C 740,95 825,180 765,275
+               C 705,370 785,465 710,565
+               C 635,665 540,750 585,900
+               L 0,900 Z`}
+            fill="#E2DFD7"
+          />
+          <path
+            d={`M 0,0 L 745,0
+               C 695,110 775,205 715,305
+               C 655,405 735,500 660,605
+               C 585,710 495,785 535,900
+               L 0,900 Z`}
+            fill="#D5DDD7"
+            fillOpacity="0.45"
+          />
+        </svg>
+
+        {/* Floating Aroma / Dust Bubbles in outer space */}
+        <div className="absolute top-[12%] left-[7%] w-20 h-20 rounded-full bg-[#365C4A]/10 blur-[1px] border border-white/40 animate-aroma" />
+        <div className="absolute bottom-[14%] right-[8%] w-14 h-14 rounded-full bg-[#E6A15C]/12 blur-[1px] border border-white/40 animate-cup-float" />
+      </div>
+
+      {/* Toast Notification Pill */}
+      {toast && (
+        <div className="fixed top-6 z-50 flex items-center gap-3 px-6 py-3.5 rounded-full bg-[#264235]/95 text-[#FAF7F2] backdrop-blur-md border border-white/25 shadow-2xl transition-all duration-300 animate-in fade-in slide-in-from-top-4">
+          <span className="text-lg">🍵</span>
+          <span className="text-sm font-semibold tracking-wide font-body">{toast}</span>
+        </div>
+      )}
+
+      {/* =========================================================================
+          MAIN 3D CARD (w-[1100px] h-[640px] rounded-[32px])
+         ========================================================================= */}
+      <div className="relative z-10 w-[1100px] h-[640px] shrink-0 rounded-[32px] main-card-3d-shadow overflow-hidden flex flex-row bg-[#FAF7F2]">
         
-        {/* Floating Coffee Cup Illustration peeking at top-left */}
-        <div className="absolute -top-3.5 left-8 z-30 pointer-events-none hidden sm:block">
-          <div className="relative">
-            {/* Cup Body */}
-            <div className="w-11 h-8 bg-[#F8F5EE] border-2 border-[#365C4A]/30 rounded-b-xl shadow-md flex items-center justify-center">
-              {/* Coffee liquid */}
-              <div className="w-7 h-4 bg-[#553F35] rounded-b-lg opacity-85" />
-            </div>
-            {/* Cup Handle */}
-            <div className="absolute top-1 -right-2.5 w-3.5 h-4 border-2 border-[#365C4A]/30 rounded-r-full" />
-            {/* Steam lines */}
-            <div className="absolute -top-3 left-2.5 flex gap-1">
-              <span className="w-0.5 h-2.5 bg-[#A7B99A] rounded-full animate-pulse opacity-70" />
-              <span className="w-0.5 h-3.5 bg-[#D89C57] rounded-full animate-pulse delay-100 opacity-80" />
-              <span className="w-0.5 h-2.5 bg-[#A7B99A] rounded-full animate-pulse delay-200 opacity-70" />
-            </div>
-          </div>
+        {/* Visual Background Layer across Card with Deep Matcha & Multi-Layer Wave SVG */}
+        <div
+          className="absolute inset-0 w-full h-full pointer-events-none z-10"
+          style={{
+            background: 'linear-gradient(140deg, #365C4A 0%, #3F5E4F 48%, #2C4A3C 100%)'
+          }}
+        >
+          {/* Internal soft glows */}
+          <div
+            className="absolute -top-20 -left-16 w-80 h-80 rounded-full blur-[70px] opacity-45"
+            style={{ background: 'radial-gradient(circle, #74A88E 0%, transparent 70%)' }}
+          />
+          <div
+            className="absolute bottom-8 left-[28%] w-72 h-72 rounded-full blur-[65px] opacity-35"
+            style={{ background: 'radial-gradient(circle, #E6A15C 0%, transparent 70%)' }}
+          />
+
+          {/* SVG Complex Layer: Organic wavy divider, coffee cup on coaster, foam & steam */}
+          <svg
+            viewBox="0 0 1100 640"
+            preserveAspectRatio="none"
+            className="w-full h-full"
+          >
+            <defs>
+              <linearGradient id="sageSteamGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#65937C" stopOpacity="0.42" />
+                <stop offset="50%" stopColor="#8AB39E" stopOpacity="0.32" />
+                <stop offset="100%" stopColor="#D8E2DC" stopOpacity="0.25" />
+              </linearGradient>
+
+              <linearGradient id="creamFoamGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#CBE0D4" stopOpacity="0.65" />
+                <stop offset="55%" stopColor="#E6EFEA" stopOpacity="0.78" />
+                <stop offset="100%" stopColor="#FAF7F2" stopOpacity="0.9" />
+              </linearGradient>
+
+              <linearGradient id="aromaWispGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#FAF7F2" stopOpacity="0.42" />
+                <stop offset="45%" stopColor="#D8E2DC" stopOpacity="0.22" />
+                <stop offset="100%" stopColor="#FAF7F2" stopOpacity="0.0" />
+              </linearGradient>
+
+              <radialGradient id="warmLampOrb" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#F59E0B" stopOpacity="0.28" />
+                <stop offset="100%" stopColor="#365C4A" stopOpacity="0" />
+              </radialGradient>
+
+              <linearGradient id="ceramicCupGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#FAF7F2" />
+                <stop offset="65%" stopColor="#EAE5DC" />
+                <stop offset="100%" stopColor="#D2CCC0" />
+              </linearGradient>
+
+              <linearGradient id="matchaLiquidGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#4B7F65" />
+                <stop offset="55%" stopColor="#659B7E" />
+                <stop offset="100%" stopColor="#3D6B54" />
+              </linearGradient>
+
+              <linearGradient id="woodCoasterGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#C89B6E" />
+                <stop offset="50%" stopColor="#DFB387" />
+                <stop offset="100%" stopColor="#A67B51" />
+              </linearGradient>
+
+              <filter id="waveShadow3D" x="-10%" y="-10%" width="120%" height="120%">
+                <feDropShadow dx="-10" dy="4" stdDeviation="12" floodColor="#182C22" floodOpacity="0.26" />
+              </filter>
+
+              <filter id="cupShadow3D" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="14" stdDeviation="10" floodColor="#14261D" floodOpacity="0.38" />
+              </filter>
+            </defs>
+
+            {/* Warm lamp orbs */}
+            <circle cx="110" cy="490" r="85" fill="url(#warmLampOrb)" />
+            <circle cx="430" cy="115" r="55" fill="url(#warmLampOrb)" />
+
+            {/* Sparkle clusters */}
+            <g fill="#FAF7F2">
+              <circle cx="65" cy="145" r="2" fillOpacity="0.35" />
+              <circle cx="480" cy="65" r="2.2" fillOpacity="0.4" />
+              <circle cx="515" cy="165" r="1.8" fillOpacity="0.35" />
+              <circle cx="85" cy="365" r="2" fillOpacity="0.3" />
+              <circle cx="290" cy="540" r="1.6" fillOpacity="0.35" />
+            </g>
+
+            <g fill="#FCD34D">
+              <circle cx="385" cy="82" r="2.2" fillOpacity="0.55" />
+              <circle cx="465" cy="245" r="2" fillOpacity="0.5" />
+              <circle cx="340" cy="445" r="2.4" fillOpacity="0.6" />
+            </g>
+
+            {/* Animated aroma & steam paths */}
+            <path
+              className="animate-steam"
+              d={`M 428,495
+                 C 395,435 455,375 495,325
+                 C 535,275 510,190 565,120
+                 L 615,155
+                 C 565,225 575,305 530,360
+                 C 485,415 465,460 455,500 Z`}
+              fill="url(#aromaWispGrad)"
+            />
+            <path
+              d={`M 455,505
+                 C 485,455 525,425 555,375
+                 C 585,325 565,255 605,205
+                 L 635,245
+                 C 595,305 605,365 565,420
+                 C 525,475 495,495 470,512 Z`}
+              fill="url(#aromaWispGrad)"
+            />
+
+            {/* Layer 1: Sage Steam Divider */}
+            <path
+              className="animate-steam"
+              d={`M 565,0
+                 C 520,38 538,95 575,128
+                 C 528,165 532,235 578,272
+                 C 522,315 518,388 565,432
+                 C 508,468 478,522 512,568
+                 C 475,595 482,625 505,640
+                 L 1100,640 L 1100,0 Z`}
+              fill="url(#sageSteamGrad)"
+            />
+
+            {/* Floating aroma bubbles along divider */}
+            <circle cx="532" cy="75" r="11" fill="#D8E2DC" fillOpacity="0.38" className="animate-aroma" />
+            <circle cx="522" cy="202" r="15" fill="#FAF7F2" fillOpacity="0.32" className="animate-cup-float" />
+            <circle cx="512" cy="355" r="18" fill="#FAF7F2" fillOpacity="0.38" className="animate-aroma" />
+            <circle cx="482" cy="402" r="9" fill="#D8E2DC" fillOpacity="0.45" />
+            <circle cx="478" cy="592" r="13" fill="#FAF7F2" fillOpacity="0.35" />
+
+            {/* Layer 2: Cream Foam Divider */}
+            <path
+              d={`M 592,0
+                 C 548,40 562,96 598,130
+                 C 552,168 558,238 602,275
+                 C 548,318 545,390 590,435
+                 C 535,472 508,526 540,572
+                 C 505,598 512,626 532,640
+                 L 1100,640 L 1100,0 Z`}
+              fill="url(#creamFoamGrad)"
+            />
+
+            {/* Layer 3: Solid Warm Cream Front Wave Divider */}
+            <path
+              filter="url(#waveShadow3D)"
+              d={`M 615,0
+                 C 572,42 585,98 620,132
+                 C 575,170 582,240 624,278
+                 C 572,320 570,392 612,438
+                 C 560,476 535,530 565,575
+                 C 532,600 538,628 556,640
+                 L 1100,640 L 1100,0 Z`}
+              fill="#FAF7F2"
+            />
+
+            {/* 3D Ceramic Coffee / Matcha Cup on Wooden Coaster */}
+            <g className="animate-cup-float" filter="url(#cupShadow3D)" transform="translate(435, 535)">
+              <ellipse cx="0" cy="36" rx="58" ry="14" fill="url(#woodCoasterGrad)" />
+              <ellipse cx="0" cy="33" rx="52" ry="11" fill="#E9C39B" fillOpacity="0.55" />
+              <path
+                d="M 38,-6 C 58,-6 58,22 34,24"
+                fill="none"
+                stroke="#EAE5DC"
+                strokeWidth="7"
+                strokeLinecap="round"
+              />
+              <path
+                d={`M -44,-16
+                   C -44,24 -26,35 0,35
+                   C 26,35 44,24 44,-16
+                   Z`}
+                fill="url(#ceramicCupGrad)"
+              />
+              <path
+                d={`M -43,-12
+                   Q -22,-2 0,-8
+                   T 43,-10
+                   L 44,-16 L -44,-16 Z`}
+                fill="#4E7A63"
+                fillOpacity="0.45"
+              />
+              <ellipse cx="0" cy="-16" rx="44" ry="13" fill="#FFFFFF" />
+              <ellipse cx="0" cy="-16" rx="40" ry="11" fill="url(#matchaLiquidGrad)" />
+              {/* Latte art heart */}
+              <path
+                d={`M 0,-12
+                   C -8,-18 -16,-14 -10,-9
+                   C -6,-6 0,-4 0,-4
+                   C 0,-4 6,-6 10,-9
+                   C 16,-14 8,-18 0,-12 Z`}
+                fill="#FAF7F2"
+                fillOpacity="0.92"
+              />
+              <ellipse cx="-18" cy="-17" rx="4" ry="2" fill="#FAF7F2" fillOpacity="0.6" />
+              {/* Fresh tea leaf garnish */}
+              <path
+                d="M -50,28 C -64,20 -66,8 -52,12 C -42,15 -42,25 -50,28 Z"
+                fill="#68A385"
+              />
+              <path
+                d="M -46,30 C -54,28 -60,22 -56,16"
+                stroke="#365C4A"
+                strokeWidth="1.2"
+                fill="none"
+              />
+            </g>
+          </svg>
         </div>
 
         {/* =========================================================================
-            CỘT BÊN TRÁI: DEEP FOREST GREEN #365C4A + HIỆU ỨNG ĐỐM SÁNG VÀNG ẤM
+            LEFT COLUMN (52% width): BRANDING & FLOATING GLASS FEATURE CARDS
            ========================================================================= */}
-        <div className="md:w-1/2 p-7 sm:p-10 lg:p-11 bg-gradient-to-br from-[#365C4A] via-[#2F5242] to-[#254235] text-white relative flex flex-col justify-between overflow-hidden">
+        <div className="relative z-20 w-[52%] h-full px-12 py-10 flex flex-col justify-between">
           
-          {/* Subtle warm golden ambient dots */}
-          <div className="absolute top-1/4 right-1/4 w-36 h-36 bg-[#D89C57]/20 rounded-full blur-2xl pointer-events-none" />
-          <div className="absolute bottom-10 left-6 w-28 h-28 bg-[#A7B99A]/20 rounded-full blur-xl pointer-events-none" />
-
-          {/* Top Area: Badge & Brand Header */}
-          <div className="relative z-10">
-            {/* Badge: ☕ STUDY CAFÉ & PEER LEARNING • */}
-            <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[11px] sm:text-xs font-semibold tracking-wide text-white/95 shadow-sm">
-              <span>☕ STUDY CAFÉ & PEER LEARNING</span>
-              <span className="w-2 h-2 rounded-full bg-[#D89C57] ml-0.5 inline-block" />
+          {/* Top Brand Pill & Headings */}
+          <div className="space-y-4">
+            <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/14 backdrop-blur-md border border-white/30 shadow-[0_8px_20px_rgba(0,0,0,0.15)]">
+              <span className="text-base leading-none">🍵</span>
+              <span className="font-body text-xs font-semibold tracking-wider uppercase text-[#F2F7F4]">
+                Study Café & Peer Learning
+              </span>
+              <span className="w-1.5 h-1.5 rounded-full bg-[#E6A15C]" />
             </div>
 
-            {/* Brand Title: StudyMatch */}
-            <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight mt-5 drop-shadow-sm font-sans">
-              StudyMatch
-            </h1>
-
-            {/* Sub-quote */}
-            <p className="text-sm sm:text-base text-[#F8F5EE]/90 italic font-light mt-1.5 tracking-wide">
-              “Một góc học tập ấm áp, một người bạn đồng hành phù hợp”
-            </p>
+            <div className="space-y-2">
+              <h1 className="font-display text-[48px] font-extrabold tracking-tight text-white leading-[1.08] drop-shadow-[0_6px_18px_rgba(14,29,21,0.32)]">
+                StudyMatch
+              </h1>
+              <p className="font-body text-[15px] text-[#E6F0EA]/95 font-medium leading-relaxed max-w-[420px]">
+                “Một góc học tập ấm áp, một người bạn đồng hành phù hợp”
+              </p>
+            </div>
           </div>
 
-          {/* Center Area: 2 Glassmorphism Feature Cards */}
-          <div className="relative z-10 my-7 space-y-3.5">
+          {/* Interactive Floating Glass Feature Cards */}
+          <div className="space-y-4 my-auto pr-10">
             
-            {/* Feature Card 1: Ghép đôi thông minh 1-1 */}
-            <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 text-white shadow-lg transition-transform hover:-translate-y-0.5">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl bg-white/15 border border-white/25 flex items-center justify-center shrink-0 text-white">
-                  <Users className="w-5 h-5 text-[#C3D4B7]" />
+            {/* Feature Card 1 */}
+            <div
+              onClick={() => {
+                setActiveFeature(1);
+                showNotification('Ghép đôi 1-1: Đã tìm thấy 18 bạn học cùng lịch rảnh & mục tiêu giải đề! 🤝✨');
+              }}
+              className={`glass-feature-card animate-card-float-1 rounded-2xl p-4 transition-all duration-300 cursor-pointer group max-w-[410px] ${
+                activeFeature === 1 ? 'ring-2 ring-amber-300/60' : ''
+              }`}
+            >
+              <div className="flex items-start gap-3.5">
+                <div className="w-11 h-11 rounded-xl bg-white/18 border border-white/35 flex items-center justify-center shrink-0 shadow-inner group-hover:scale-105 transition-transform">
+                  <Users className="w-5 h-5 text-[#E8F8F0]" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
-                    <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
-                      Ghép đôi thông minh 1-1 ✨
+                    <h3 className="font-display font-bold text-[15px] text-white flex items-center gap-1.5">
+                      <span>Ghép đôi thông minh 1-1</span>
+                      <Sparkles className="w-3.5 h-3.5 text-[#FCD34D] shrink-0" />
                     </h3>
-                    <span className="px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-extrabold tracking-wider text-white border border-white/20 shrink-0">
-                      AI MATCH
+                    <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/15 text-[#E8F8F0] border border-white/20">
+                      AI Match
                     </span>
                   </div>
-                  <p className="text-xs text-white/80 mt-1 leading-relaxed">
-                    Đồng bộ lịch rảnh tự động, tìm ca cùng chuyên ngành để luyện giải đề & ôn thi hiệu quả.
+                  <p className="font-body text-xs text-[#DFECE5]/90 leading-relaxed mt-1">
+                    Đồng bộ lịch rảnh tự động, tìm cạ cứng cùng chuyên ngành để luyện giải đề & ôn thi hiệu quả.
                   </p>
-                  
-                  {/* Metric chips */}
-                  <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center gap-4 text-[11px] text-[#FAEFDF] font-medium">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5 text-[#D89C57]" />
-                      Khớp lịch rảnh 98%
+                  <div className="flex items-center gap-3 mt-2.5 text-[11px] text-[#CBE2D6] font-medium">
+                    <span className="inline-flex items-center gap-1">
+                      <Calendar className="w-3 h-3 text-[#FCD34D]" /> Khớp lịch rảnh 98%
                     </span>
-                    <span className="flex items-center gap-1">
-                      <GraduationCap className="w-3.5 h-3.5 text-[#D89C57]" />
-                      45+ Đại học
+                    <span className="inline-flex items-center gap-1">
+                      <BookOpen className="w-3 h-3 text-[#A7F3D0]" /> 45+ Đại học
                     </span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Feature Card 2: Phòng học Pomodoro chung */}
-            <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 text-white shadow-lg transition-transform hover:-translate-y-0.5">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#D89C57]/25 border border-[#D89C57]/40 flex items-center justify-center shrink-0 text-[#D89C57]">
-                  <Headphones className="w-5 h-5 text-[#D89C57]" />
+            {/* Feature Card 2 */}
+            <div
+              onClick={() => {
+                setActiveFeature(2);
+                showNotification('Phòng học Pomodoro: Đang phát nhạc Matcha Lofi Chill cùng 340 sinh viên! 🎧🍵');
+              }}
+              className={`glass-feature-card animate-card-float-2 rounded-2xl p-4 transition-all duration-300 cursor-pointer group max-w-[395px] ml-4 ${
+                activeFeature === 2 ? 'ring-2 ring-amber-300/60' : ''
+              }`}
+            >
+              <div className="flex items-start gap-3.5">
+                <div className="w-11 h-11 rounded-xl bg-[#E6A15C]/25 border border-[#FCD34D]/40 flex items-center justify-center shrink-0 shadow-inner group-hover:scale-105 transition-transform">
+                  <Headphones className="w-5 h-5 text-[#FDE68A]" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
-                    <h3 className="text-sm font-bold text-white">
+                    <h3 className="font-display font-bold text-[15px] text-white">
                       Phòng học Pomodoro chung
                     </h3>
-                    <span className="px-2 py-0.5 rounded-full bg-[#D89C57] text-[#254235] text-[10px] font-extrabold tracking-wider shrink-0 shadow-sm">
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-400/25 text-amber-200 border border-amber-300/35">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-300 animate-ping" />
                       LOFI LIVE
                     </span>
                   </div>
-                  <p className="text-xs text-white/80 mt-1 leading-relaxed">
+                  <p className="font-body text-xs text-[#DFECE5]/90 leading-relaxed mt-1">
                     Chu kỳ tập trung 25/5 phút kết hợp âm thanh quán cà phê mưa rơi & nhạc lofi thư giãn.
                   </p>
                 </div>
@@ -185,255 +611,223 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
           </div>
 
-          {/* Left Footer Note */}
-          <div className="relative z-10 flex items-center gap-2 text-xs text-white/85 pt-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#D89C57] shrink-0 animate-pulse" />
-            <span>Không gian học tập hàng đầu cho sinh viên Việt Nam</span>
+          {/* Left Footer Tagline */}
+          <div className="flex items-center gap-2.5 pt-2">
+            <span className="relative flex h-2.5 w-2.5 shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F59E0B] opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#F59E0B] shadow-[0_0_10px_#F59E0B]" />
+            </span>
+            <span className="font-body text-xs font-medium text-[#EBF5EE]/95 tracking-wide drop-shadow-xs">
+              Không gian học tập hàng đầu cho sinh viên Việt Nam
+            </span>
           </div>
 
         </div>
 
         {/* =========================================================================
-            MULTI-LAYERED ORGANIC WAVY SVG DIVIDER (Ngăn cách 2 cột)
+            RIGHT COLUMN (48% width): WARM CREAM FORM WITH 3D PILL BUTTONS
            ========================================================================= */}
-        <div className="hidden md:block absolute top-0 bottom-0 left-1/2 -ml-6 w-12 z-20 pointer-events-none">
-          <svg
-            className="w-full h-full text-[#F8F5EE] fill-current"
-            viewBox="0 0 100 1000"
-            preserveAspectRatio="none"
-          >
-            {/* Layer 1 - Matcha soft wave shadow */}
-            <path
-              d="M0,0 C30,150 15,350 45,500 C75,650 30,850 60,1000 L100,1000 L100,0 Z"
-              fill="#A7B99A"
-              fillOpacity="0.25"
-            />
-            {/* Layer 2 - Cream dark soft wave */}
-            <path
-              d="M15,0 C45,180 25,380 55,520 C85,670 40,860 70,1000 L100,1000 L100,0 Z"
-              fill="#EBE8DF"
-            />
-            {/* Layer 3 - Warm Cream main front wave */}
-            <path
-              d="M30,0 C65,190 35,400 70,540 C100,680 50,880 85,1000 L100,1000 L100,0 Z"
-              fill="#F8F5EE"
-            />
-          </svg>
-        </div>
-
-        {/* =========================================================================
-            CỘT BÊN PHẢI: WARM CREAM #F8F5EE + FORM ĐĂNG NHẬP CHUẨN MẪU
-           ========================================================================= */}
-        <div className="md:w-1/2 p-7 sm:p-10 lg:p-12 bg-[#F8F5EE] text-[#553F35] flex flex-col justify-between relative z-10">
+        <div className="relative z-20 w-[48%] h-full pl-12 pr-14 py-12 flex flex-col justify-between items-center">
           
-          {/* Top Right Badge */}
-          <div className="flex justify-end">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EBE8DF] border border-[#D89C57]/40 text-xs font-semibold text-[#553F35] shadow-sm">
-              <span>✨ Học kỳ Mới • Matcha Vibe</span>
+          {/* Top Right Term Pill Badge */}
+          <div className="w-full flex justify-end">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EFECE3] border border-[#E2DDD2] text-[11px] font-medium text-[#5A7063]">
+              <span>✨</span>
+              <span>Học kỳ Mới • Matcha Vibe</span>
             </div>
           </div>
 
-          {/* Form Content Area */}
-          <div className="my-auto py-4 max-w-sm w-full mx-auto">
+          {/* Center Form Section */}
+          <div className="w-full max-w-[350px] my-auto space-y-6">
             
-            {/* Title Header */}
-            <div className="text-center mb-6">
-              <h2 className="text-2xl sm:text-3xl font-black text-[#365C4A] tracking-wider uppercase">
-                {isRegisterMode ? 'CREATE ACCOUNT' : 'USER LOGIN'}
+            {/* Header Titles */}
+            <div className="text-center space-y-1.5">
+              <h2 className="font-display text-[28px] font-extrabold tracking-[0.14em] text-[#2C4A3C] uppercase">
+                USER LOGIN
               </h2>
-              <p className="text-xs text-[#553F35]/75 mt-1 font-medium">
-                {isRegisterMode ? 'Bắt đầu hành trình tìm bạn học ăn ý' : 'Welcome to the website'}
+              <p className="font-body text-sm text-[#76897E] font-medium tracking-wide">
+                Welcome to the website
               </p>
             </div>
 
-            {/* Error Message if any */}
-            {errorMsg && (
-              <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
-                <span>{errorMsg}</span>
-              </div>
-            )}
-
-            {/* Form Inputs */}
-            <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Login Form */}
+            <form onSubmit={handleLogin} className="space-y-4 pt-1">
               
-              {isRegisterMode && (
-                <>
-                  {/* Họ tên */}
-                  <div className="relative">
-                    <input
-                      type="text"
-                      required
-                      value={displayName}
-                      onChange={e => setDisplayName(e.target.value)}
-                      placeholder="Họ và tên hoặc biệt danh"
-                      className="w-full px-5 py-3 rounded-full bg-white border border-[#365C4A]/25 text-[#365C4A] placeholder-[#553F35]/40 text-xs sm:text-sm shadow-inner focus:outline-none focus:ring-2 focus:ring-[#365C4A]/30 focus:border-[#365C4A] transition-all"
-                    />
-                  </div>
-                  {/* Trường */}
-                  <div className="relative">
-                    <input
-                      type="text"
-                      required
-                      value={university}
-                      onChange={e => setUniversity(e.target.value)}
-                      placeholder="Trường Đại học (VD: HUST, FTU, NEU...)"
-                      className="w-full px-5 py-3 rounded-full bg-white border border-[#365C4A]/25 text-[#365C4A] placeholder-[#553F35]/40 text-xs sm:text-sm shadow-inner focus:outline-none focus:ring-2 focus:ring-[#365C4A]/30 focus:border-[#365C4A] transition-all"
-                    />
-                  </div>
-                  {/* Ngành */}
-                  <div className="relative">
-                    <input
-                      type="text"
-                      required
-                      value={major}
-                      onChange={e => setMajor(e.target.value)}
-                      placeholder="Ngành học (VD: Data Science & AI)"
-                      className="w-full px-5 py-3 rounded-full bg-white border border-[#365C4A]/25 text-[#365C4A] placeholder-[#553F35]/40 text-xs sm:text-sm shadow-inner focus:outline-none focus:ring-2 focus:ring-[#365C4A]/30 focus:border-[#365C4A] transition-all"
-                    />
-                  </div>
-                </>
-              )}
-
-              {/* Ô nhập Email: Pill shape rounded-full, Mail icon */}
-              <div className="relative flex items-center">
-                <div className="absolute left-4 text-[#365C4A]/70 pointer-events-none">
-                  <Mail className="w-4 h-4" />
+              {/* Recessed Pill Input: Email */}
+              <div className="pill-input-recessed rounded-full px-4 py-3.5 flex items-center gap-3.5 transition-all duration-200 border border-[#E2DED3]">
+                <div className="w-7 h-7 rounded-full bg-white text-[#365C4A] flex items-center justify-center shrink-0 shadow-xs">
+                  <Mail className="w-3.5 h-3.5 stroke-[2.3]" />
                 </div>
                 <input
-                  type="email"
-                  required
+                  type="text"
                   value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="duccoi4321@gmail.com"
-                  className="w-full pl-11 pr-5 py-3 rounded-full bg-white border border-[#365C4A]/25 text-[#365C4A] font-medium placeholder-[#553F35]/40 text-xs sm:text-sm shadow-inner focus:outline-none focus:ring-2 focus:ring-[#365C4A]/30 focus:border-[#365C4A] transition-all"
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Email sinh viên / Hồ sơ học tập"
+                  className="w-full bg-transparent text-[#253D31] placeholder-[#8A9990] text-[13.5px] font-medium focus:outline-none font-body"
                 />
               </div>
 
-              {/* Ô nhập Mật khẩu: Pill shape rounded-full, Lock icon, Eye toggle */}
-              <div className="relative flex items-center">
-                <div className="absolute left-4 text-[#365C4A]/70 pointer-events-none">
-                  <Lock className="w-4 h-4" />
+              {/* Recessed Pill Input: Password */}
+              <div className="pill-input-recessed rounded-full px-4 py-3.5 flex items-center gap-3.5 transition-all duration-200 border border-[#E2DED3]">
+                <div className="w-7 h-7 rounded-full bg-white text-[#365C4A] flex items-center justify-center shrink-0 shadow-xs">
+                  <Lock className="w-3.5 h-3.5 stroke-[2.3]" />
                 </div>
                 <input
                   type={showPassword ? 'text' : 'password'}
-                  required
                   value={password}
-                  onChange={e => setPassword(e.target.value)}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="Mật khẩu"
-                  className="w-full pl-11 pr-11 py-3 rounded-full bg-white border border-[#365C4A]/25 text-[#365C4A] placeholder-[#553F35]/40 text-xs sm:text-sm shadow-inner focus:outline-none focus:ring-2 focus:ring-[#365C4A]/30 focus:border-[#365C4A] transition-all"
+                  className="w-full bg-transparent text-[#253D31] placeholder-[#8A9990] text-[13.5px] font-medium focus:outline-none font-body"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 text-[#365C4A]/60 hover:text-[#365C4A] focus:outline-none"
+                  className="text-[#7E9086] hover:text-[#365C4A] transition-colors focus:outline-none cursor-pointer pr-1"
+                  title={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
 
-              {/* Utilities row: Remember & Forgot password */}
-              <div className="flex items-center justify-between text-xs pt-1 px-1">
-                <label className="flex items-center gap-2 cursor-pointer text-[#553F35]/90 font-medium">
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={e => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 rounded-full text-[#365C4A] border-gray-300 focus:ring-[#365C4A] accent-[#365C4A]"
-                  />
-                  <span>Remember</span>
+              {/* Remember Me & Forgot Password */}
+              <div className="flex items-center justify-between px-1.5 pt-0.5 text-xs font-body">
+                <label
+                  onClick={() => setRemember(!remember)}
+                  className="inline-flex items-center gap-2 cursor-pointer select-none text-[#5F7368] hover:text-[#2C4A3C] transition-colors"
+                >
+                  <span
+                    className={`w-4 h-4 rounded-full flex items-center justify-center transition-all duration-200 ${
+                      remember ? 'bg-[#365C4A] text-white shadow-xs' : 'bg-[#E6E2D8] border border-[#C5C0B4] text-transparent'
+                    }`}
+                  >
+                    <Check className="w-2.5 h-2.5 stroke-[3]" />
+                  </span>
+                  <span className="font-semibold">Remember</span>
                 </label>
-                <a
-                  href="#forgot"
-                  onClick={(e) => { e.preventDefault(); alert('Vui lòng kiểm tra hộp thư email của bạn để thiết lập lại mật khẩu, hoặc đăng nhập trực tiếp bằng Google!'); }}
-                  className="text-[#553F35]/80 hover:text-[#365C4A] hover:underline"
+
+                <button
+                  type="button"
+                  onClick={() => showNotification('Đã gửi hướng dẫn đặt lại mật khẩu vào hộp thư sinh viên của bạn! 📩')}
+                  className="font-semibold text-[#6A7E73] hover:text-[#365C4A] hover:underline transition-colors cursor-pointer"
                 >
                   Forgot password?
-                </a>
+                </button>
               </div>
 
-              {/* Nút Đăng nhập bằng Form (Tùy chọn) */}
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full py-2.5 rounded-full bg-[#365C4A]/10 hover:bg-[#365C4A]/20 text-[#365C4A] text-xs font-bold transition-all border border-[#365C4A]/20"
-              >
-                {isLoading ? 'Đang xử lý...' : (isRegisterMode ? 'Tạo Tài Khoản Mới' : 'Đăng nhập với Email')}
-              </button>
-
-              {/* Divider Or */}
-              <div className="relative flex items-center justify-center my-3">
-                <div className="border-t border-[#365C4A]/15 w-full" />
-                <span className="bg-[#F8F5EE] px-2 text-[11px] text-[#553F35]/60 uppercase font-semibold">hoặc</span>
-                <div className="border-t border-[#365C4A]/15 w-full" />
+              {/* Action Button: LOGIN WITH GOOGLE (With Google multi-color G logo & arrow) */}
+              <div className="pt-2">
+                <button
+                  type="button"
+                  disabled={isLoading}
+                  onClick={handleGoogleLogin}
+                  className="matcha-cta-button w-full rounded-2xl p-2 pr-5 flex items-center justify-between text-white font-display font-bold text-[13px] tracking-[0.12em] uppercase transition-all duration-300 cursor-pointer group disabled:opacity-70"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-sm shrink-0 group-hover:scale-105 transition-transform">
+                    <svg className="w-4 h-4" viewBox="0 0 24 24">
+                      <path
+                        fill="#4285F4"
+                        d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
+                      />
+                      <path
+                        fill="#34A853"
+                        d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.14C3.26 21.3 7.31 24 12 24z"
+                      />
+                      <path
+                        fill="#FBBC05"
+                        d="M5.28 14.24c-.24-.72-.38-1.49-.38-2.24s.14-1.52.38-2.24V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.99-3.14z"
+                      />
+                      <path
+                        fill="#EA4335"
+                        d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.99 3.14c.95-2.85 3.6-4.96 6.72-4.96z"
+                      />
+                    </svg>
+                  </div>
+                  <span className="flex-1 text-center">
+                    {isLoading ? 'ĐANG KẾT NỐI...' : 'LOGIN WITH GOOGLE'}
+                  </span>
+                  <ArrowRight className="w-4 h-4 text-[#CBE4D6] opacity-85 group-hover:translate-x-1 transition-transform" />
+                </button>
               </div>
-
-              {/* Nút hành động chính chuẩn mẫu: LOGIN WITH GOOGLE (Pill shape, Deep Forest Green #365C4A, Google logo circle, text, arrow) */}
-              <button
-                type="button"
-                onClick={handleGoogleLogin}
-                disabled={isLoading}
-                className="w-full py-3 px-3 rounded-full bg-[#365C4A] hover:bg-[#2B4A3B] active:scale-[0.99] text-white shadow-xl shadow-[#365C4A]/25 transition-all flex items-center justify-between group"
-              >
-                {/* Google Logo in White Circle */}
-                <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm shrink-0">
-                  <svg className="w-4 h-4" viewBox="0 0 24 24">
-                    <path
-                      fill="#4285F4"
-                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                    />
-                    <path
-                      fill="#34A853"
-                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                    />
-                    <path
-                      fill="#FBBC05"
-                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                    />
-                    <path
-                      fill="#EA4335"
-                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                    />
-                  </svg>
-                </div>
-
-                {/* Text Centered */}
-                <span className="font-extrabold text-xs sm:text-sm tracking-wide text-white uppercase text-center flex-1">
-                  LOGIN WITH GOOGLE
-                </span>
-
-                {/* Right Arrow */}
-                <div className="w-8 h-8 flex items-center justify-center text-white/80 group-hover:translate-x-0.5 transition-transform">
-                  <ArrowRight className="w-4 h-4" />
-                </div>
-              </button>
 
             </form>
 
-            {/* Switch Mode: Create Account */}
-            <div className="text-center mt-6">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsRegisterMode(!isRegisterMode);
-                  setErrorMsg(null);
-                }}
-                className="text-xs font-semibold text-[#365C4A] hover:text-[#254235] underline decoration-[#365C4A]/40 underline-offset-4 transition-colors"
-              >
-                {isRegisterMode ? 'Already have an account? Login' : 'Create Account'}
-              </button>
-            </div>
+            {/* Optional Form Login direct trigger */}
+            {email.trim() && (
+              <div className="pt-1 text-center">
+                <button
+                  type="button"
+                  onClick={handleLogin}
+                  className="text-xs text-[#365C4A] hover:underline font-bold"
+                >
+                  Hoặc đăng nhập trực tiếp với mật khẩu →
+                </button>
+              </div>
+            )}
 
           </div>
 
-          {/* Right Bottom Footer Microcopy */}
-          <div className="text-center text-[11px] text-[#553F35]/60 pt-2">
-            Matcha Vibe Edition • Bản quyền StudyMatch 2026
+          {/* Bottom Link: Create Account */}
+          <div className="w-full text-center pb-1">
+            <button
+              type="button"
+              onClick={() => setIsRegisterModal(true)}
+              className="font-body text-[13px] font-semibold text-[#54695D] hover:text-[#2C4A3C] border-b border-dotted border-[#54695D] hover:border-[#2C4A3C] pb-0.5 transition-colors cursor-pointer"
+            >
+              Create Account
+            </button>
           </div>
 
         </div>
 
       </div>
+
+      {/* =========================================================================
+          CREATE ACCOUNT MODAL (Matching exact embedded popup)
+         ========================================================================= */}
+      {isRegisterModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-[#FAF7F2] border border-white/80 rounded-3xl max-w-md w-full p-7 shadow-2xl space-y-4 relative">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <span className="text-xl">🍵</span>
+                <h3 className="font-display font-bold text-lg text-[#264235]">
+                  Tạo hồ sơ học tập StudyMatch
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsRegisterModal(false)}
+                className="p-1 rounded-full text-[#4E6157] hover:bg-[#E2DFD5] transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="font-body text-xs text-[#5E7368] leading-relaxed">
+              Đăng ký nhanh bằng email sinh viên (<span className="font-semibold text-[#365C4A]">@edu.vn</span>) hoặc tài khoản Google để tìm bạn đồng hành học tập & tham gia phòng Pomodoro Lofi!
+            </p>
+
+            <form onSubmit={handleRegisterSubmit} className="space-y-3.5 pt-1">
+              <div className="pill-input-recessed rounded-full px-4 py-3 flex items-center gap-3 border border-[#E2DED3]">
+                <Mail className="w-4 h-4 text-[#365C4A]" />
+                <input
+                  type="email"
+                  value={registerEmail}
+                  onChange={(e) => setRegisterEmail(e.target.value)}
+                  placeholder="Nhập email sinh viên của bạn..."
+                  className="w-full bg-transparent text-xs text-[#23382E] focus:outline-none font-body"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="matcha-cta-button w-full py-3.5 rounded-2xl text-white font-display font-bold text-xs tracking-widest uppercase cursor-pointer"
+              >
+                Khởi tạo hồ sơ & Ghép đôi
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
     </div>
   );

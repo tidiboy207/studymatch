@@ -20,7 +20,11 @@ export const PaymentQrModal: React.FC<PaymentQrModalProps> = ({
   const [isConfirming, setIsConfirming] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
-  const planName = (paymentEvent.plan_code === 'plus_59k' || paymentEvent.plan_code === 'plus_29k')
+  const planName = paymentEvent.plan_code === 'plus_29k'
+    ? 'StudyMatch Plus (1 Tháng • 29.000đ)'
+    : paymentEvent.plan_code === 'sprint_19k'
+    ? 'Pass Mùa Thi - Sprint (2 Tuần • 19.000đ)'
+    : paymentEvent.plan_code === 'plus_59k'
     ? 'StudyMatch Plus (1 Tháng • 59.000đ)'
     : 'Pass Mùa Thi - Sprint (2 Tuần • 29.000đ)';
   const transferContent = `SM ${paymentEvent.plan_code.toUpperCase()} ${paymentEvent.id.slice(-6)}`;

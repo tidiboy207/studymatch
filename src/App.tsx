@@ -277,8 +277,8 @@ export const App: React.FC = () => {
     setUpcomingSession(updated);
   };
 
-  // Pricing actions: Sprint 29k / Plus 59k
-  const handleSelectPlan = async (planCode: 'plus_59k' | 'sprint_29k', amount: number) => {
+  // Pricing actions: Sprint 19k/29k, Plus 29k/59k
+  const handleSelectPlan = async (planCode: 'plus_59k' | 'sprint_29k' | 'plus_29k' | 'sprint_19k', amount: number) => {
     setIsUpgradeLimitModalOpen(false);
     const event = await dataService.trackPaymentClick(planCode, amount);
     setActivePaymentEvent(event);
@@ -547,7 +547,7 @@ export const App: React.FC = () => {
         )}
 
         {/* =========================================================================
-            PHÂN HỆ 5: TIẾN ĐỘ & BẢNG GIÁ DOANH THU (PROGRESS & PRICING: 0đ, 29k, 59k)
+            PHÂN HỆ 5: TIẾN ĐỘ & BẢNG GIÁ DOANH THU (PROGRESS & PRICING: 0đ, 19k, 29k)
            ========================================================================= */}
         {currentTab === 'pricing' && (
           <div className="space-y-8">

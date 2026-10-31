@@ -18,11 +18,11 @@ export const PriceAnchoringBanner: React.FC = () => {
 
           <h3 className="text-xl sm:text-2xl font-black text-[#365C4A] tracking-tight leading-snug">
             Trượt 1 môn đại cương tốn <span className="text-rose-600 underline decoration-rose-400">2.400.000đ</span> học lại.
-            <br className="hidden sm:inline" /> Gói bảo hiểm qua môn chỉ từ <span className="text-[#365C4A] bg-[#A7B99A]/30 px-2 py-0.5 rounded-lg border border-[#A7B99A]">29.000đ</span>.
+            <br className="hidden sm:inline" /> Gói bảo hiểm qua môn chỉ từ <span className="text-[#365C4A] bg-[#A7B99A]/30 px-2 py-0.5 rounded-lg border border-[#A7B99A]">19.000đ</span>.
           </h3>
 
           <p className="mt-2 text-xs sm:text-sm text-[#553F35]/85 leading-relaxed font-medium">
-            Tại ĐH Bách khoa Hà Nội và các trường kỹ thuật, tỷ lệ trượt môn Giải tích, Đại số dao động từ <strong>25% – 35%</strong> kèm nguy cơ <strong>Cảnh cáo học vụ Mức 1</strong> (bị khóa trần còn 14 tín chỉ). Chi phí gói StudyMatch chỉ tương đương <strong className="text-[#365C4A]">1,2% tiền học lại</strong> — chưa bằng một cốc trà sữa hoặc suất cơm bụi sinh viên.
+            Tại ĐH Bách khoa Hà Nội và các trường kỹ thuật, tỷ lệ trượt môn Giải tích, Đại số dao động từ <strong>25% – 35%</strong> kèm nguy cơ <strong>Cảnh cáo học vụ Mức 1</strong> (bị khóa trần còn 14 tín chỉ). Chi phí gói StudyMatch chỉ tương đương <strong className="text-[#365C4A]">0,8% tiền học lại</strong> — chưa bằng một cốc trà đá hoặc suất cơm bụi sinh viên.
           </p>
         </div>
 

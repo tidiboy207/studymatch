@@ -4,7 +4,7 @@ import { X, ArrowRight, Zap, CheckCircle2 } from 'lucide-react';
 interface UpgradeLimitModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectPlan: (planCode: 'plus_59k' | 'sprint_29k', amount: number) => void;
+  onSelectPlan: (planCode: 'plus_59k' | 'sprint_29k' | 'plus_29k' | 'sprint_19k', amount: number) => void;
 }
 
 export const UpgradeLimitModal: React.FC<UpgradeLimitModalProps> = ({
@@ -54,7 +54,7 @@ export const UpgradeLimitModal: React.FC<UpgradeLimitModalProps> = ({
               <div>
                 <div className="text-xs font-black text-[#D89C57] uppercase tracking-wider">Pass Mùa Thi</div>
                 <div className="mt-1 flex items-baseline gap-1">
-                  <span className="text-2xl font-black text-[#365C4A] font-mono">29.000đ</span>
+                  <span className="text-2xl font-black text-[#365C4A] font-mono">19.000đ</span>
                   <span className="text-[11px] text-[#553F35]/70">/ 2 tuần</span>
                 </div>
                 <ul className="mt-3 space-y-1.5 text-[11px] text-[#553F35] font-medium">
@@ -69,10 +69,10 @@ export const UpgradeLimitModal: React.FC<UpgradeLimitModalProps> = ({
                 </ul>
               </div>
               <button
-                onClick={() => onSelectPlan('sprint_29k', 29000)}
+                onClick={() => onSelectPlan('sprint_19k', 19000)}
                 className="mt-4 w-full py-2.5 rounded-full bg-[#D89C57] hover:bg-[#c28642] text-white font-black text-xs transition-all flex items-center justify-center gap-1.5 shadow-md shadow-[#D89C57]/20 active:scale-95"
               >
-                <span>Chọn 29.000đ</span>
+                <span>Chọn 19.000đ</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -85,7 +85,7 @@ export const UpgradeLimitModal: React.FC<UpgradeLimitModalProps> = ({
               <div>
                 <div className="text-xs font-black text-[#A7B99A] uppercase tracking-wider">StudyMatch Plus</div>
                 <div className="mt-1 flex items-baseline gap-1">
-                  <span className="text-2xl font-black text-white font-mono">59.000đ</span>
+                  <span className="text-2xl font-black text-white font-mono">29.000đ</span>
                   <span className="text-[11px] text-white/80">/ tháng</span>
                 </div>
                 <ul className="mt-3 space-y-1.5 text-[11px] text-white/95 font-medium">
@@ -104,10 +104,10 @@ export const UpgradeLimitModal: React.FC<UpgradeLimitModalProps> = ({
                 </ul>
               </div>
               <button
-                onClick={() => onSelectPlan('plus_59k', 59000)}
+                onClick={() => onSelectPlan('plus_29k', 29000)}
                 className="mt-4 w-full py-2.5 rounded-full bg-[#A7B99A] hover:bg-[#b8c9ab] text-[#1E372C] font-black text-xs transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-black/20 active:scale-95"
               >
-                <span>Nâng Cấp 59.000đ</span>
+                <span>Nâng Cấp 29.000đ</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
