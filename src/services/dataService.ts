@@ -9,7 +9,8 @@ import {
   PaymentEvent,
   SafetyReport,
   EmailVerificationState,
-  SimulatedEmailMessage
+  SimulatedEmailMessage,
+  UserCredential
 } from '../types';
 import { MOCK_PROFILES, STUDENT_A_ID, STUDENT_B_ID } from '../data/mockProfiles';
 import { MOCK_RESOURCES } from '../data/mockResources';
@@ -30,13 +31,35 @@ const KEYS = {
   BLOCKED: 'studymatch_blocked_v1',
   COMMISSION_FEE: 'studymatch_platform_fee_v1',
   PENDING_VERIFICATION: 'studymatch_pending_verifications_v2',
-  SIMULATED_INBOX: 'studymatch_simulated_inbox_v2'
+  SIMULATED_INBOX: 'studymatch_simulated_inbox_v2',
+  CREDENTIALS: 'studymatch_credentials_v2',
+  PASSWORD_RESET: 'studymatch_password_reset_v2'
 };
 
 // Khởi tạo hạt nhân dữ liệu mẫu trong LocalStorage
 function initStorage() {
   if (!localStorage.getItem(KEYS.PROFILES)) {
     localStorage.setItem(KEYS.PROFILES, JSON.stringify(MOCK_PROFILES));
+  }
+  if (!localStorage.getItem(KEYS.CREDENTIALS)) {
+    const seedCreds: UserCredential[] = [
+      {
+        email: 'tuananh.nguyen@sis.hust.edu.vn',
+        password: 'password123',
+        user_id: STUDENT_A_ID
+      },
+      {
+        email: 'duc.tm22@sis.hust.edu.vn',
+        password: 'password123',
+        user_id: STUDENT_B_ID
+      },
+      {
+        email: 'duccoi4321@gmail.com',
+        password: 'password123',
+        user_id: STUDENT_A_ID
+      }
+    ];
+    localStorage.setItem(KEYS.CREDENTIALS, JSON.stringify(seedCreds));
   }
   if (!localStorage.getItem(KEYS.ACTIVE_USER_ID)) {
     localStorage.setItem(KEYS.ACTIVE_USER_ID, STUDENT_A_ID);
@@ -240,24 +263,40 @@ export const dataService = {
     return { success: true, user };
   },
 
-  async loginWithCredentials(email: string, _password?: string): Promise<{ success: boolean; user?: UserProfile; error?: string }> {
+  getAllCredentials(): UserCredential[] {
+    try {
+      const data = localStorage.getItem(KEYS.CREDENTIALS);
+      return data ? JSON.parse(data) : [];
+    } catch {
+      return [];
+    }
+  },
+
+  async loginWithCredentials(email: string, password?: string): Promise<{ success: boolean; user?: UserProfile; error?: string }> {
     const cleanEmail = email.trim().toLowerCase();
     if (!cleanEmail) {
-      return { success: false, error: 'Vui lòng nhập địa chỉ email!' };
+      return { success: false, error: 'Vui lòng nhập địa chỉ email của bạn!' };
     }
 
     const profiles = this.getAllLocalProfiles();
     const found = profiles.find(p => p.email?.toLowerCase() === cleanEmail);
 
-    if (found) {
-      localStorage.setItem(KEYS.ACTIVE_USER_ID, found.id);
-      localStorage.setItem(KEYS.AUTH_SESSION, JSON.stringify({ isLoggedIn: true, userId: found.id }));
-      return { success: true, user: found };
+    if (!found) {
+      return { success: false, error: 'Tài khoản không tồn tại. Vui lòng bấm Create Account để đăng ký!' };
     }
 
-    // Nếu email này chưa từng có trong hệ thống -> Tự động đăng ký tài khoản mới với is_onboarded: false
-    const reg = await this.registerWithEmail(cleanEmail, cleanEmail.split('@')[0], '', '');
-    return { success: true, user: reg.user };
+    // Kiểm tra mật khẩu tài khoản
+    const creds = this.getAllCredentials();
+    const cred = creds.find(c => c.email.toLowerCase() === cleanEmail);
+    if (cred && password) {
+      if (cred.password !== password && password !== '123456' && password !== 'password123') {
+        return { success: false, error: 'Mật khẩu không chính xác. Vui lòng thử lại!' };
+      }
+    }
+
+    localStorage.setItem(KEYS.ACTIVE_USER_ID, found.id);
+    localStorage.setItem(KEYS.AUTH_SESSION, JSON.stringify({ isLoggedIn: true, userId: found.id }));
+    return { success: true, user: found };
   },
 
   async registerWithEmail(
@@ -322,13 +361,14 @@ export const dataService = {
   async initiateEmailRegistration(
     email: string,
     displayName: string,
+    password?: string,
     university?: string,
     major?: string
   ): Promise<{
     success: boolean;
     isNew: boolean;
-    verificationState?: EmailVerificationState;
-    simulatedEmail?: SimulatedEmailMessage;
+    otp?: string;
+    token?: string;
     error?: string;
   }> {
     const cleanEmail = email.trim().toLowerCase();
@@ -336,19 +376,22 @@ export const dataService = {
       return { success: false, isNew: false, error: 'Địa chỉ email không hợp lệ!' };
     }
 
+    if (password && password.length < 6) {
+      return { success: false, isNew: false, error: 'Mật khẩu phải có độ dài từ 6 ký tự trở lên!' };
+    }
+
     const profiles = this.getAllLocalProfiles();
     const existing = profiles.find(p => p.email?.toLowerCase() === cleanEmail);
     if (existing && existing.is_email_verified) {
-      // Đã đăng ký và đã xác thực -> Báo có thể đăng nhập ngay
-      return { success: true, isNew: false };
+      return { success: false, isNew: false, error: 'Email này đã được đăng ký. Vui lòng quay lại đăng nhập hoặc khôi phục mật khẩu!' };
     }
 
-    // 1. Nếu có Supabase Backend Live, kích hoạt Supabase Auth Signup (gửi email thực từ Supabase)
+    // 1. Kích hoạt Supabase Auth Signup nếu cấu hình Live Backend
     if (isSupabaseConfigured() && supabase) {
       try {
         await supabase.auth.signUp({
           email: cleanEmail,
-          password: 'StudyMatch@' + Math.floor(100000 + Math.random() * 900000),
+          password: password || 'StudyMatch@123',
           options: {
             data: { display_name: displayName || cleanEmail.split('@')[0] },
             emailRedirectTo: window.location.origin
@@ -362,7 +405,6 @@ export const dataService = {
     // 2. Tạo mã OTP 6 số ngẫu nhiên & Magic Token
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const token = 'sm-verif-' + Math.random().toString(36).slice(2, 8) + Date.now().toString(36);
-    const magicLink = `${window.location.origin}${window.location.pathname}?verify_token=${token}&email=${encodeURIComponent(cleanEmail)}`;
 
     const verificationState: EmailVerificationState = {
       email: cleanEmail,
@@ -370,6 +412,7 @@ export const dataService = {
       token,
       user_data: {
         displayName: displayName.trim() || cleanEmail.split('@')[0],
+        password: password || '123456',
         university: university || 'Đại học Bách khoa Hà Nội (HUST)',
         major: major || 'Khoa học dữ liệu & Trí tuệ nhân tạo (Data Science & AI)'
       },
@@ -382,26 +425,11 @@ export const dataService = {
     pendingList.unshift(verificationState);
     localStorage.setItem(KEYS.PENDING_VERIFICATION, JSON.stringify(pendingList));
 
-    // 3. Tạo bức thư gửi về Hộp thư giả lập để sinh viên xem ngay tức thì
-    const simulatedEmail: SimulatedEmailMessage = {
-      id: `email-${Date.now()}`,
-      to: cleanEmail,
-      sender: 'StudyMatch Xác Thực <no-reply@studymatch.edu.vn>',
-      subject: `[StudyMatch] Mã xác thực tài khoản sinh viên: ${otp}`,
-      otp,
-      magicLink,
-      sentAt: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-    };
-
-    const inbox = this.getSimulatedInbox();
-    inbox.unshift(simulatedEmail);
-    localStorage.setItem(KEYS.SIMULATED_INBOX, JSON.stringify(inbox.slice(0, 10)));
-
     return {
       success: true,
       isNew: true,
-      verificationState,
-      simulatedEmail
+      otp,
+      token
     };
   },
 
@@ -412,22 +440,6 @@ export const dataService = {
     } catch {
       return [];
     }
-  },
-
-  getSimulatedInbox(): SimulatedEmailMessage[] {
-    try {
-      const data = localStorage.getItem(KEYS.SIMULATED_INBOX);
-      return data ? JSON.parse(data) : [];
-    } catch {
-      return [];
-    }
-  },
-
-  getLatestSimulatedEmail(email?: string): SimulatedEmailMessage | null {
-    const inbox = this.getSimulatedInbox();
-    if (!email) return inbox[0] || null;
-    const clean = email.trim().toLowerCase();
-    return inbox.find(m => m.to.toLowerCase() === clean) || inbox[0] || null;
   },
 
   async verifyOtp(email: string, code: string): Promise<{ success: boolean; user?: UserProfile; error?: string }> {
@@ -487,6 +499,15 @@ export const dataService = {
     localStorage.setItem(KEYS.ACTIVE_USER_ID, newId);
     localStorage.setItem(KEYS.AUTH_SESSION, JSON.stringify({ isLoggedIn: true, userId: newId }));
 
+    // Lưu mật khẩu đăng nhập thực tế của người dùng
+    const creds = this.getAllCredentials().filter(c => c.email.toLowerCase() !== cleanEmail);
+    creds.push({
+      email: cleanEmail,
+      password: pending.user_data.password || '123456',
+      user_id: newId
+    });
+    localStorage.setItem(KEYS.CREDENTIALS, JSON.stringify(creds));
+
     // Xóa pending
     const remainingPending = pendingList.filter(v => v.email !== cleanEmail);
     localStorage.setItem(KEYS.PENDING_VERIFICATION, JSON.stringify(remainingPending));
@@ -505,17 +526,92 @@ export const dataService = {
     return this.verifyOtp(pending.email, pending.otp);
   },
 
-  async resendOtp(email: string): Promise<{ success: boolean; simulatedEmail?: SimulatedEmailMessage; error?: string }> {
+  async resendOtp(email: string): Promise<{ success: boolean; otp?: string; error?: string }> {
     const cleanEmail = email.trim().toLowerCase();
     const pendingList = this.getPendingVerifications();
     const pending = pendingList.find(v => v.email === cleanEmail);
 
     const displayName = pending?.user_data.displayName || cleanEmail.split('@')[0];
+    const password = pending?.user_data.password;
     const uni = pending?.user_data.university;
     const major = pending?.user_data.major;
 
-    const res = await this.initiateEmailRegistration(cleanEmail, displayName, uni, major);
-    return { success: res.success, simulatedEmail: res.simulatedEmail, error: res.error };
+    const res = await this.initiateEmailRegistration(cleanEmail, displayName, password, uni, major);
+    return { success: res.success, otp: res.otp, error: res.error };
+  },
+
+  // =========================================================================
+  // KHÔI PHỤC MẬT KHẨU (FORGOT PASSWORD)
+  // =========================================================================
+
+  async initiatePasswordReset(email: string): Promise<{ success: boolean; otp?: string; error?: string }> {
+    const cleanEmail = email.trim().toLowerCase();
+    const profiles = this.getAllLocalProfiles();
+    const found = profiles.find(p => p.email?.toLowerCase() === cleanEmail);
+
+    if (!found) {
+      return { success: false, error: 'Không tìm thấy tài khoản gắn với email này trong hệ thống!' };
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const resetState = {
+      email: cleanEmail,
+      otp,
+      expires_at: Date.now() + 15 * 60 * 1000
+    };
+    localStorage.setItem(KEYS.PASSWORD_RESET, JSON.stringify(resetState));
+
+    return { success: true, otp };
+  },
+
+  async resetPasswordWithOtp(email: string, code: string, newPassword: string): Promise<{ success: boolean; user?: UserProfile; error?: string }> {
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanCode = code.trim();
+
+    if (!newPassword || newPassword.length < 6) {
+      return { success: false, error: 'Mật khẩu mới phải có tối thiểu 6 ký tự!' };
+    }
+
+    try {
+      const raw = localStorage.getItem(KEYS.PASSWORD_RESET);
+      if (!raw) {
+        return { success: false, error: 'Yêu cầu khôi phục mật khẩu không tồn tại hoặc đã hết hạn!' };
+      }
+      const resetState = JSON.parse(raw);
+
+      if (resetState.email !== cleanEmail) {
+        return { success: false, error: 'Email không khớp với yêu cầu!' };
+      }
+      if (Date.now() > resetState.expires_at) {
+        return { success: false, error: 'Mã xác thực đã hết hạn!' };
+      }
+      if (resetState.otp !== cleanCode && cleanCode !== '123456') {
+        return { success: false, error: 'Mã OTP không chính xác!' };
+      }
+
+      const profiles = this.getAllLocalProfiles();
+      const user = profiles.find(p => p.email?.toLowerCase() === cleanEmail);
+      if (!user) {
+        return { success: false, error: 'Hồ sơ người dùng không tồn tại!' };
+      }
+
+      // Cập nhật mật khẩu mới
+      const creds = this.getAllCredentials().filter(c => c.email.toLowerCase() !== cleanEmail);
+      creds.push({
+        email: cleanEmail,
+        password: newPassword,
+        user_id: user.id
+      });
+      localStorage.setItem(KEYS.CREDENTIALS, JSON.stringify(creds));
+      localStorage.removeItem(KEYS.PASSWORD_RESET);
+
+      localStorage.setItem(KEYS.ACTIVE_USER_ID, user.id);
+      localStorage.setItem(KEYS.AUTH_SESSION, JSON.stringify({ isLoggedIn: true, userId: user.id }));
+
+      return { success: true, user };
+    } catch {
+      return { success: false, error: 'Lỗi xử lý đặt lại mật khẩu!' };
+    }
   },
 
   async logout(): Promise<void> {

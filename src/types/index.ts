@@ -159,11 +159,18 @@ export interface EmailVerificationState {
   token: string;
   user_data: {
     displayName: string;
+    password?: string;
     university?: string;
     major?: string;
   };
   expires_at: number;
   sent_at: string;
+}
+
+export interface UserCredential {
+  email: string;
+  password: string;
+  user_id: string;
 }
 
 export interface SimulatedEmailMessage {

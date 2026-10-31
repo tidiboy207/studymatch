@@ -37,23 +37,33 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [activeFeature, setActiveFeature] = useState<number | null>(null);
+  
+  // Registration States
   const [isRegisterModal, setIsRegisterModal] = useState(false);
   const [registerName, setRegisterName] = useState('');
   const [registerEmail, setRegisterEmail] = useState('');
+  const [registerPassword, setRegisterPassword] = useState('');
+  const [registerConfirmPassword, setRegisterConfirmPassword] = useState('');
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
 
-  // Email Verification States (OTP & Magic Link)
+  // Email Verification States
   const [isOtpModal, setIsOtpModal] = useState(false);
   const [otpEmail, setOtpEmail] = useState('');
   const [otpDigits, setOtpDigits] = useState<string[]>(['', '', '', '', '', '']);
   const [resendCooldown, setResendCooldown] = useState(60);
-  const [simulatedEmail, setSimulatedEmail] = useState<SimulatedEmailMessage | null>(null);
-  const [showSimulatedInbox, setShowSimulatedInbox] = useState(true);
+
+  // Forgot Password States
+  const [isForgotModal, setIsForgotModal] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotOtp, setForgotOtp] = useState('');
+  const [forgotNewPassword, setForgotNewPassword] = useState('');
+  const [forgotStep, setForgotStep] = useState<1 | 2>(1);
 
   const showNotification = (msg: string) => {
     setToast(msg);
     setTimeout(() => {
       setToast(null);
-    }, 3800);
+    }, 4500);
   };
 
   // Check Magic Link verification from URL query (?verify_token=...&email=...)
@@ -91,7 +101,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const targetEmail = email.trim() || 'duccoi4321@gmail.com';
+    const targetEmail = email.trim();
+    if (!targetEmail) {
+      showNotification('Vui lòng nhập email đăng nhập!');
+      return;
+    }
     setIsLoading(true);
     try {
       const result = await dataService.loginWithCredentials(
@@ -99,12 +113,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
         password || '123456'
       );
       if (result.success && result.user) {
-        showNotification(`Chào mừng ${result.user.display_name} đến với góc học tập StudyMatch! 🍵`);
+        showNotification(`Chào mừng ${result.user.display_name} đến với StudyMatch! 🍵`);
         setTimeout(() => {
           onLoginSuccess(result.user!);
         }, 500);
       } else {
-        showNotification(result.error || 'Đăng nhập không thành công, vui lòng thử lại!');
+        showNotification(result.error || 'Đăng nhập không thành công, vui lòng kiểm tra lại!');
       }
     } catch (err: any) {
       showNotification('Lỗi kết nối máy chủ!');
@@ -116,7 +130,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     const targetEmail = email.trim();
-    showNotification('Đang đồng bộ lịch học & hồ sơ qua Google Sinh viên... 🍵');
+    showNotification('Đang đồng bộ đăng nhập qua Google Sinh viên... 🍵');
     try {
       const result = await dataService.loginWithGoogle(targetEmail);
       if (result.success && result.user) {
@@ -139,35 +153,40 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
       showNotification('Vui lòng nhập địa chỉ email của bạn!');
       return;
     }
+    if (!registerPassword || registerPassword.length < 6) {
+      showNotification('Mật khẩu phải chứa tối thiểu 6 ký tự!');
+      return;
+    }
+    if (registerPassword !== registerConfirmPassword) {
+      showNotification('Mật khẩu xác nhận không khớp, vui lòng nhập lại!');
+      return;
+    }
+
     setIsLoading(true);
     try {
       const result = await dataService.initiateEmailRegistration(
         targetEmail,
-        registerName.trim() || targetEmail.split('@')[0]
+        registerName.trim() || targetEmail.split('@')[0],
+        registerPassword
       );
 
       if (!result.success) {
-        showNotification(result.error || 'Không thể gửi mã xác thực!');
+        showNotification(result.error || 'Không thể tạo yêu cầu xác thực!');
         return;
       }
 
-      if (!result.isNew) {
-        // Tài khoản đã có sẵn và đã xác thực -> Chuyển sang đăng nhập
-        showNotification('Email này đã được kích hoạt trước đó! Đang đăng nhập... 🍵');
-        const loginRes = await dataService.loginWithCredentials(targetEmail);
-        if (loginRes.user) onLoginSuccess(loginRes.user);
-        return;
-      }
-
-      // Đóng modal đăng ký và mở modal nhập mã OTP
+      // Chuyển sang màn hình nhập mã OTP
       setIsRegisterModal(false);
       setOtpEmail(targetEmail);
       setOtpDigits(['', '', '', '', '', '']);
       setResendCooldown(60);
-      setSimulatedEmail(result.simulatedEmail || null);
-      setShowSimulatedInbox(true);
       setIsOtpModal(true);
-      showNotification(`Mã xác thực 6 số đã được gửi tới ${targetEmail}! ✉️`);
+      showNotification(`Mã xác thực 6 số đã được gửi tới ${targetEmail}! Vui lòng kiểm tra email.`);
+      if (result.otp) {
+        setTimeout(() => {
+          showNotification(`[StudyMatch Security] Mã OTP xác nhận: ${result.otp}`);
+        }, 1200);
+      }
     } catch (err: any) {
       showNotification('Đăng ký không thành công, vui lòng thử lại!');
     } finally {
@@ -189,7 +208,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     }
 
     // Auto submit if 6 digits complete
-    if (digit && index === 5 && newDigits.every(d => d !== '')) {
+    if (digit && index === 5 && newDigits.every((d) => d !== '')) {
       handleVerifyOtpSubmit(newDigits.join(''));
     }
   };
@@ -250,8 +269,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
       const res = await dataService.resendOtp(otpEmail);
       if (res.success) {
         setResendCooldown(60);
-        setSimulatedEmail(res.simulatedEmail || null);
-        showNotification(`Đã gửi lại mã OTP mới đến ${otpEmail}! 📬`);
+        showNotification(`Đã gửi lại mã OTP mới đến ${otpEmail}! Vui lòng kiểm tra email.`);
+        if (res.otp) {
+          setTimeout(() => {
+            showNotification(`[StudyMatch Security] Mã OTP mới: ${res.otp}`);
+          }, 1200);
+        }
       } else {
         showNotification(res.error || 'Không thể gửi lại mã!');
       }
@@ -260,20 +283,51 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     }
   };
 
-  // Xác thực qua Magic Link 1-click
-  const handleMagicLinkClick = async (token: string) => {
+  // Forgot password handlers
+  const handleForgotSendOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotEmail.trim()) {
+      showNotification('Vui lòng nhập email tài khoản của bạn!');
+      return;
+    }
     setIsLoading(true);
-    showNotification('Đang kích hoạt bằng liên kết Magic Link... 🍵');
     try {
-      const res = await dataService.verifyMagicLink(token, otpEmail);
-      if (res.success && res.user) {
-        setIsOtpModal(false);
-        showNotification(`Kích hoạt tài khoản thành công! 🍵`);
-        setTimeout(() => {
-          onLoginSuccess(res.user!);
-        }, 500);
+      const res = await dataService.initiatePasswordReset(forgotEmail.trim());
+      if (res.success) {
+        setForgotStep(2);
+        showNotification(`Đã gửi mã khôi phục tới ${forgotEmail}!`);
+        if (res.otp) {
+          setTimeout(() => {
+            showNotification(`[Khôi phục mật khẩu] Mã OTP của bạn: ${res.otp}`);
+          }, 1200);
+        }
       } else {
-        showNotification(res.error || 'Liên kết không hợp lệ!');
+        showNotification(res.error || 'Không tìm thấy tài khoản!');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleForgotResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotOtp.trim() || forgotOtp.trim().length < 6) {
+      showNotification('Vui lòng nhập đủ 6 chữ số mã OTP!');
+      return;
+    }
+    if (!forgotNewPassword || forgotNewPassword.length < 6) {
+      showNotification('Mật khẩu mới phải có tối thiểu 6 ký tự!');
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const res = await dataService.resetPasswordWithOtp(forgotEmail, forgotOtp, forgotNewPassword);
+      if (res.success && res.user) {
+        setIsForgotModal(false);
+        showNotification('Đặt lại mật khẩu thành công! Đang đăng nhập...');
+        setTimeout(() => onLoginSuccess(res.user!), 600);
+      } else {
+        showNotification(res.error || 'Mã xác thực không hợp lệ!');
       }
     } finally {
       setIsLoading(false);
@@ -903,7 +957,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
                 <button
                   type="button"
-                  onClick={() => showNotification('Đã gửi hướng dẫn đặt lại mật khẩu vào hộp thư sinh viên của bạn! 📩')}
+                  onClick={() => {
+                    setForgotEmail(email.trim());
+                    setForgotStep(1);
+                    setForgotOtp('');
+                    setForgotNewPassword('');
+                    setIsForgotModal(true);
+                  }}
                   className="font-semibold text-[#6A7E73] hover:text-[#365C4A] hover:underline transition-colors cursor-pointer"
                 >
                   Forgot password?
@@ -1002,8 +1062,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
               Đăng ký nhanh bằng email sinh viên (<span className="font-semibold text-[#365C4A]">@edu.vn</span>) hoặc tài khoản Google để tìm bạn đồng hành học tập & tham gia phòng Pomodoro Lofi!
             </p>
 
-            <form onSubmit={handleRegisterSubmit} className="space-y-3.5 pt-1">
-              <div className="pill-input-recessed rounded-full px-4 py-3 flex items-center gap-3 border border-[#E2DED3]">
+            <form onSubmit={handleRegisterSubmit} className="space-y-3 pt-1">
+              <div className="pill-input-recessed rounded-full px-4 py-2.5 flex items-center gap-3 border border-[#E2DED3]">
                 <Users className="w-4 h-4 text-[#365C4A]" />
                 <input
                   type="text"
@@ -1014,7 +1074,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                 />
               </div>
 
-              <div className="pill-input-recessed rounded-full px-4 py-3 flex items-center gap-3 border border-[#E2DED3]">
+              <div className="pill-input-recessed rounded-full px-4 py-2.5 flex items-center gap-3 border border-[#E2DED3]">
                 <Mail className="w-4 h-4 text-[#365C4A]" />
                 <input
                   type="email"
@@ -1026,11 +1086,44 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                 />
               </div>
 
+              <div className="pill-input-recessed rounded-full px-4 py-2.5 flex items-center gap-3 border border-[#E2DED3]">
+                <Lock className="w-4 h-4 text-[#365C4A]" />
+                <input
+                  type={showRegisterPassword ? 'text' : 'password'}
+                  value={registerPassword}
+                  onChange={(e) => setRegisterPassword(e.target.value)}
+                  placeholder="Mật khẩu (tối thiểu 6 ký tự)..."
+                  required
+                  className="w-full bg-transparent text-xs text-[#23382E] focus:outline-none font-body"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                  className="text-[#7E9086] hover:text-[#365C4A] transition-colors focus:outline-none cursor-pointer pr-1"
+                  title={showRegisterPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                >
+                  {showRegisterPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+
+              <div className="pill-input-recessed rounded-full px-4 py-2.5 flex items-center gap-3 border border-[#E2DED3]">
+                <Lock className="w-4 h-4 text-[#365C4A]" />
+                <input
+                  type={showRegisterPassword ? 'text' : 'password'}
+                  value={registerConfirmPassword}
+                  onChange={(e) => setRegisterConfirmPassword(e.target.value)}
+                  placeholder="Xác nhận lại mật khẩu..."
+                  required
+                  className="w-full bg-transparent text-xs text-[#23382E] focus:outline-none font-body"
+                />
+              </div>
+
               <button
                 type="submit"
+                disabled={isLoading}
                 className="matcha-cta-button w-full py-3.5 rounded-2xl text-white font-display font-bold text-xs tracking-widest uppercase cursor-pointer flex items-center justify-center gap-2"
               >
-                <span>Gửi mã xác thực về Email</span>
+                <span>Tiếp tục xác thực Email</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </form>
@@ -1157,76 +1250,111 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
               )}
             </div>
 
-            {/* Simulated Mailbox Preview (Hộp thư đến giả lập để trải nghiệm thực tế ngay lập tức) */}
-            {simulatedEmail && (
-              <div className="rounded-2xl border border-emerald-300 bg-emerald-50/70 p-4 space-y-3 text-xs text-[#264235]">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 font-bold text-emerald-900">
-                    <span className="text-base">📬</span>
-                    <span>Hộp thư sinh viên (Bản xem trước thư vừa gửi tới)</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowSimulatedInbox(!showSimulatedInbox)}
-                    className="text-emerald-700 hover:text-emerald-900 text-[11px] font-semibold flex items-center gap-0.5 cursor-pointer"
-                  >
-                    {showSimulatedInbox ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                  </button>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          FORGOT PASSWORD MODAL
+         ========================================================================= */}
+      {isForgotModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-[#FAF7F2] border border-white/80 rounded-3xl max-w-md w-full p-7 shadow-2xl space-y-4 relative">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-[#365C4A]/10 text-[#365C4A] flex items-center justify-center">
+                  <KeyRound className="w-5 h-5" />
+                </div>
+                <h3 className="font-display font-bold text-lg text-[#264235]">
+                  {forgotStep === 1 ? 'Khôi phục mật khẩu' : 'Đặt mật khẩu mới'}
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsForgotModal(false)}
+                className="p-1 rounded-full text-[#4E6157] hover:bg-[#E2DFD5] transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {forgotStep === 1 ? (
+              <form onSubmit={handleForgotSendOtp} className="space-y-4 pt-1">
+                <p className="font-body text-xs text-[#5E7368] leading-relaxed">
+                  Nhập email tài khoản StudyMatch của bạn. Hệ thống sẽ gửi mã xác minh 6 số để bạn thiết lập lại mật khẩu.
+                </p>
+
+                <div className="pill-input-recessed rounded-full px-4 py-3 flex items-center gap-3 border border-[#E2DED3]">
+                  <Mail className="w-4 h-4 text-[#365C4A]" />
+                  <input
+                    type="email"
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    placeholder="Nhập email tài khoản của bạn..."
+                    required
+                    className="w-full bg-transparent text-xs text-[#23382E] focus:outline-none font-body"
+                  />
                 </div>
 
-                {showSimulatedInbox && (
-                  <div className="space-y-3 pt-1 border-t border-emerald-200">
-                    <div className="space-y-1 text-[11px]">
-                      <div><strong>Người gửi:</strong> {simulatedEmail.sender}</div>
-                      <div><strong>Tiêu đề:</strong> {simulatedEmail.subject}</div>
-                      <div><strong>Thời gian:</strong> {simulatedEmail.sentAt}</div>
-                    </div>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="matcha-cta-button w-full py-3.5 rounded-2xl text-white font-display font-bold text-xs tracking-widest uppercase cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <span>Gửi mã xác thực</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleForgotResetPassword} className="space-y-4 pt-1">
+                <p className="font-body text-xs text-[#5E7368] leading-relaxed">
+                  Nhập mã 6 số đã được gửi tới <strong className="text-[#365C4A]">{forgotEmail}</strong> và đặt mật khẩu mới.
+                </p>
 
-                    <div className="p-3 bg-white rounded-xl border border-emerald-200 text-center space-y-2 shadow-sm">
-                      <div className="text-[11px] text-[#553F35]/80 font-medium">
-                        Mã OTP xác nhận quyền sở hữu email của bạn:
-                      </div>
-                      <div className="text-3xl font-black font-mono tracking-widest text-[#365C4A] bg-[#FAF7F2] py-2 rounded-lg border border-[#365C4A]/20">
-                        {simulatedEmail.otp}
-                      </div>
-                      <div className="flex items-center justify-center gap-2 pt-1">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const digits = simulatedEmail.otp.split('');
-                            setOtpDigits(digits);
-                            handleVerifyOtpSubmit(simulatedEmail.otp);
-                          }}
-                          className="px-3 py-1.5 rounded-full bg-[#365C4A] hover:bg-[#2A4839] text-white text-[11px] font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
-                        >
-                          <Copy className="w-3 h-3" />
-                          <span>Điền & Xác thực nhanh</span>
-                        </button>
+                <div className="pill-input-recessed rounded-full px-4 py-3 flex items-center gap-3 border border-[#E2DED3]">
+                  <KeyRound className="w-4 h-4 text-[#365C4A]" />
+                  <input
+                    type="text"
+                    maxLength={6}
+                    value={forgotOtp}
+                    onChange={(e) => setForgotOtp(e.target.value.replace(/\D/g, ''))}
+                    placeholder="Mã xác nhận 6 số..."
+                    required
+                    className="w-full bg-transparent text-xs text-[#23382E] focus:outline-none font-mono font-bold tracking-widest"
+                  />
+                </div>
 
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const match = simulatedEmail.magicLink.match(/verify_token=([^&]+)/);
-                            if (match && match[1]) {
-                              handleMagicLinkClick(match[1]);
-                            }
-                          }}
-                          className="px-3 py-1.5 rounded-full bg-white hover:bg-emerald-100 text-[#365C4A] border border-[#365C4A]/30 text-[11px] font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
-                        >
-                          <ExternalLink className="w-3 h-3" />
-                          <span>Bấm Link xác thực (Magic Link)</span>
-                        </button>
-                      </div>
-                    </div>
+                <div className="pill-input-recessed rounded-full px-4 py-3 flex items-center gap-3 border border-[#E2DED3]">
+                  <Lock className="w-4 h-4 text-[#365C4A]" />
+                  <input
+                    type="password"
+                    value={forgotNewPassword}
+                    onChange={(e) => setForgotNewPassword(e.target.value)}
+                    placeholder="Mật khẩu mới (tối thiểu 6 ký tự)..."
+                    required
+                    className="w-full bg-transparent text-xs text-[#23382E] focus:outline-none font-body"
+                  />
+                </div>
 
-                    <p className="text-[10px] text-emerald-800/80 leading-relaxed italic">
-                      * Lưu ý: Trong môi trường triển khai thực tế (Production), bức thư này được gửi thẳng từ máy chủ email Supabase/SMTP vào Inbox hoặc thư mục Spam của email sinh viên.
-                    </p>
-                  </div>
-                )}
-              </div>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="matcha-cta-button w-full py-3.5 rounded-2xl text-white font-display font-bold text-xs tracking-widest uppercase cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <span>Lưu mật khẩu mới & Đăng nhập</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+
+                <div className="text-center pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setForgotStep(1)}
+                    className="text-xs text-[#553F35]/70 hover:underline cursor-pointer"
+                  >
+                    ← Quay lại nhập email khác
+                  </button>
+                </div>
+              </form>
             )}
-
           </div>
         </div>
       )}
