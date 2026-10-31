@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Pause, RotateCcw, Bell, Clock, Volume2 } from 'lucide-react';
+import { Play, Pause, RotateCcw, Clock, Volume2 } from 'lucide-react';
 import { dataService } from '../../services/dataService';
 
 interface PomodoroTimerProps {
@@ -93,27 +93,27 @@ export const PomodoroTimer: React.FC<PomodoroTimerProps> = ({ sessionId }) => {
   const progressPercent = ((durationMode * 60 - timeLeft) / (durationMode * 60)) * 100;
 
   return (
-    <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-lg">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-300 uppercase tracking-wider">
-          <Clock className="w-4 h-4 text-indigo-400" />
+    <div className="p-5 rounded-3xl bg-white border border-[#365C4A]/20 shadow-md">
+      <div className="flex items-center justify-between mb-3 pb-2 border-b border-[#365C4A]/10">
+        <div className="flex items-center gap-1.5 text-xs font-black text-[#365C4A] uppercase tracking-wider">
+          <Clock className="w-4 h-4 text-[#D89C57]" />
           <span>Đồng hồ Pomodoro Kỷ luật</span>
         </div>
         
         {/* Chuyển chế độ 25m / 50m */}
-        <div className="flex rounded-lg bg-slate-950 p-0.5 border border-slate-800 text-[11px] font-semibold">
+        <div className="flex rounded-full bg-[#F8F5EE] p-0.5 border border-[#365C4A]/15 text-[11px] font-bold">
           <button
             onClick={() => resetTimer(25)}
-            className={`px-2 py-0.5 rounded transition-all ${
-              durationMode === 25 ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
+            className={`px-3 py-1 rounded-full transition-all ${
+              durationMode === 25 ? 'bg-[#365C4A] text-white shadow-sm' : 'text-[#553F35]/70 hover:text-[#365C4A]'
             }`}
           >
             25m
           </button>
           <button
             onClick={() => resetTimer(50)}
-            className={`px-2 py-0.5 rounded transition-all ${
-              durationMode === 50 ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
+            className={`px-3 py-1 rounded-full transition-all ${
+              durationMode === 50 ? 'bg-[#365C4A] text-white shadow-sm' : 'text-[#553F35]/70 hover:text-[#365C4A]'
             }`}
           >
             50m
@@ -123,30 +123,30 @@ export const PomodoroTimer: React.FC<PomodoroTimerProps> = ({ sessionId }) => {
 
       {/* Timer Display */}
       <div className="text-center py-2 relative">
-        <div className="text-4xl sm:text-5xl font-black font-mono tracking-tight text-white drop-shadow-md">
+        <div className="text-4xl sm:text-5xl font-black font-mono tracking-tight text-[#365C4A]">
           {formattedTime}
         </div>
-        <p className="text-[11px] text-slate-400 mt-1">
+        <p className="text-[11px] text-[#553F35]/75 mt-1 font-medium">
           {isRunning ? '⏳ Đang tập trung cao độ — Không chuyển tab' : '⏸ Đang tạm dừng'}
         </p>
 
         {/* Progress bar */}
-        <div className="w-full bg-slate-950 rounded-full h-1.5 mt-3 overflow-hidden border border-slate-800">
+        <div className="w-full bg-[#F8F5EE] rounded-full h-2 mt-3 overflow-hidden border border-[#365C4A]/15">
           <div
-            className="bg-gradient-to-r from-indigo-500 to-emerald-400 h-full transition-all duration-1000"
+            className="bg-gradient-to-r from-[#A7B99A] to-[#365C4A] h-full transition-all duration-1000 rounded-full"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
       </div>
 
       {/* Controls */}
-      <div className="flex items-center justify-center gap-2 mt-3 pt-2 border-t border-slate-800/80">
+      <div className="flex items-center justify-center gap-2 mt-4 pt-3 border-t border-[#365C4A]/10">
         <button
           onClick={toggleRun}
-          className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-md ${
+          className={`px-5 py-2 rounded-full text-xs font-black transition-all flex items-center gap-1.5 shadow-md active:scale-95 ${
             isRunning
-              ? 'bg-amber-600 hover:bg-amber-500 text-white'
-              : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/25'
+              ? 'bg-[#D89C57] hover:bg-[#c28642] text-white shadow-[#D89C57]/25'
+              : 'bg-[#365C4A] hover:bg-[#2B4A3B] text-white shadow-[#365C4A]/25'
           }`}
         >
           {isRunning ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-white" />}
@@ -155,7 +155,7 @@ export const PomodoroTimer: React.FC<PomodoroTimerProps> = ({ sessionId }) => {
 
         <button
           onClick={() => resetTimer(durationMode)}
-          className="p-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 transition-all"
+          className="p-2 rounded-full bg-[#F8F5EE] hover:bg-[#EBE8DF] text-[#553F35] border border-[#365C4A]/15 transition-all"
           title="Đặt lại đồng hồ"
         >
           <RotateCcw className="w-3.5 h-3.5" />
@@ -163,7 +163,7 @@ export const PomodoroTimer: React.FC<PomodoroTimerProps> = ({ sessionId }) => {
 
         <button
           onClick={playChimeSound}
-          className="p-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 transition-all"
+          className="p-2 rounded-full bg-[#F8F5EE] hover:bg-[#EBE8DF] text-[#553F35] border border-[#365C4A]/15 transition-all"
           title="Thử âm thanh chuông"
         >
           <Volume2 className="w-3.5 h-3.5" />

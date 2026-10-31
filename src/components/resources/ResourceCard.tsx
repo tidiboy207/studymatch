@@ -7,8 +7,7 @@ import {
   BookOpen,
   HelpCircle,
   Sparkles,
-  ArrowRight,
-  FileCheck
+  ArrowRight
 } from 'lucide-react';
 
 interface ResourceCardProps {
@@ -27,71 +26,71 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
   isAttached = false
 }) => {
   const typeColors = {
-    'Ghi chú': 'bg-blue-500/20 text-blue-300 border-blue-500/30',
-    'Bài tập': 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-    'Đề ôn tập': 'bg-purple-500/20 text-purple-300 border-purple-500/30',
+    'Ghi chú': 'bg-[#A7B99A]/25 text-[#365C4A] border-[#A7B99A]',
+    'Bài tập': 'bg-[#D89C57]/20 text-[#9C682A] border-[#D89C57]/40',
+    'Đề ôn tập': 'bg-[#365C4A]/10 text-[#365C4A] border-[#365C4A]/30',
   };
 
   return (
-    <div className="rounded-2xl bg-slate-900 border border-slate-800 hover:border-indigo-500/50 p-5 shadow-xl transition-all flex flex-col justify-between group">
+    <div className="rounded-3xl bg-white border border-[#365C4A]/15 hover:border-[#365C4A] p-5 sm:p-6 shadow-md hover:shadow-xl transition-all flex flex-col justify-between group">
       <div>
         
         {/* Top Badges */}
         <div className="flex items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${typeColors[resource.resource_type]}`}>
+            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${typeColors[resource.resource_type]}`}>
               {resource.resource_type}
             </span>
             {resource.copyright_verified && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 text-[10px] font-semibold">
-                <ShieldCheck className="w-3 h-3 text-emerald-400" />
-                Đã kiểm duyệt bản quyền
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-300 text-[10px] font-bold">
+                <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                Kiểm duyệt chuẩn
               </span>
             )}
           </div>
 
           <button
             onClick={() => onToggleBookmark(resource.id)}
-            className={`p-1.5 rounded-lg transition-all ${
+            className={`p-1.5 rounded-xl transition-all ${
               resource.is_saved
-                ? 'text-amber-400 bg-amber-500/10'
-                : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'
+                ? 'text-[#D89C57] bg-[#D89C57]/15'
+                : 'text-gray-400 hover:text-[#365C4A] hover:bg-[#F8F5EE]'
             }`}
             title={resource.is_saved ? 'Bỏ lưu' : 'Lưu tài liệu yêu thích'}
           >
-            <Bookmark className={`w-4 h-4 ${resource.is_saved ? 'fill-amber-400' : ''}`} />
+            <Bookmark className={`w-4 h-4 ${resource.is_saved ? 'fill-[#D89C57]' : ''}`} />
           </button>
         </div>
 
         {/* Title */}
         <h3
           onClick={() => onOpenDetail(resource)}
-          className="text-sm font-bold text-white group-hover:text-indigo-300 transition-colors cursor-pointer line-clamp-2 leading-snug"
+          className="text-sm font-black text-[#365C4A] group-hover:underline transition-colors cursor-pointer line-clamp-2 leading-snug"
         >
           {resource.title}
         </h3>
 
         {/* Subject & Topic */}
-        <div className="flex items-center gap-2 mt-2 text-xs text-slate-400">
-          <span className="font-semibold text-slate-300">{resource.subject}</span>
+        <div className="flex items-center gap-2 mt-2 text-xs text-[#553F35]">
+          <span className="font-bold text-[#365C4A]">{resource.subject}</span>
           <span>•</span>
-          <span className="text-emerald-400">{resource.topic}</span>
+          <span className="text-[#553F35]/70 font-semibold">{resource.topic}</span>
         </div>
 
         {/* Formula Preview Pill */}
-        <div className="mt-3 p-2.5 rounded-xl bg-slate-950 border border-slate-800/80 text-[11px] font-mono text-slate-300 line-clamp-1">
-          <span className="text-indigo-400 mr-1.5 font-sans font-semibold">Công thức:</span>
+        <div className="mt-3.5 p-3 rounded-2xl bg-[#F8F5EE] border border-[#365C4A]/15 text-[11px] font-mono text-[#553F35] line-clamp-1">
+          <span className="text-[#365C4A] mr-1.5 font-sans font-bold">Công thức:</span>
           {resource.formula_summary}
         </div>
 
         {/* Micro Counters */}
-        <div className="flex items-center gap-3 mt-3 text-[11px] text-slate-400">
+        <div className="flex items-center gap-3 mt-3 text-[11px] text-[#553F35]/80 font-medium">
           <span className="flex items-center gap-1">
-            <Sparkles className="w-3 h-3 text-indigo-400" />
+            <Sparkles className="w-3.5 h-3.5 text-[#D89C57]" />
             {resource.flashcards?.length || 0} Flashcards
           </span>
           <span className="flex items-center gap-1">
-            <HelpCircle className="w-3 h-3 text-emerald-400" />
+            <HelpCircle className="w-3.5 h-3.5 text-[#365C4A]" />
             {resource.mini_quiz?.length || 0} Câu trắc nghiệm
           </span>
         </div>
@@ -99,26 +98,26 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
       </div>
 
       {/* Action Footer */}
-      <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between gap-2">
+      <div className="mt-5 pt-4 border-t border-[#365C4A]/10 flex items-center justify-between gap-2">
         <button
           onClick={() => onAttachToSession(resource.id)}
-          className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 border ${
+          className={`px-3 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 border ${
             isAttached
-              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-              : 'bg-slate-950 hover:bg-slate-800 text-slate-300 hover:text-white border-slate-800'
+              ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+              : 'bg-[#F8F5EE] hover:bg-[#EBE8DF] text-[#553F35] border-[#365C4A]/20'
           }`}
           title="Gắn tài liệu này vào buổi học sắp tới để hai bạn cùng làm chung"
         >
-          <Paperclip className="w-3.5 h-3.5" />
+          <Paperclip className="w-3.5 h-3.5 text-[#365C4A]" />
           <span>{isAttached ? 'Đã gắn vào phòng' : 'Gắn vào buổi học'}</span>
         </button>
 
         <button
           onClick={() => onOpenDetail(resource)}
-          className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow"
+          className="px-4 py-2 rounded-full bg-[#365C4A] hover:bg-[#2B4A3B] text-white text-xs font-black transition-all flex items-center gap-1.5 shadow-md shadow-[#365C4A]/20 active:scale-95"
         >
           <span>Học ngay</span>
-          <ArrowRight className="w-3 h-3" />
+          <ArrowRight className="w-3.5 h-3.5 text-[#A7B99A]" />
         </button>
       </div>
 

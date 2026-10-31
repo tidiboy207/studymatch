@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
 import confetti from 'canvas-confetti';
 import {
-  Sparkles,
   Trophy,
   CheckCircle2,
   Users,
   Repeat,
   Flame,
   Wallet,
-  ArrowRight,
   ShieldAlert
 } from 'lucide-react';
 import { StudySession, UserProfile } from '../../types';
@@ -70,25 +68,25 @@ export const PostSessionModal: React.FC<PostSessionModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-700/80 rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden relative">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-white border border-[#365C4A]/25 rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden relative">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-[#A7B99A]/20 rounded-full blur-3xl pointer-events-none" />
 
         {/* Normal Completion View */}
         {!isMissedMode ? (
           <div>
             {/* Header */}
-            <div className="p-6 bg-gradient-to-r from-emerald-950/50 via-slate-900 to-indigo-950/40 border-b border-slate-800 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center mx-auto text-emerald-400 mb-3 shadow-lg shadow-emerald-500/10">
+            <div className="p-6 bg-gradient-to-r from-[#365C4A] to-[#264234] text-white text-center">
+              <div className="w-16 h-16 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center mx-auto text-[#A7B99A] mb-3 shadow-lg">
                 <Trophy className="w-8 h-8" />
               </div>
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              <span className="text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full bg-white/15 text-[#A7B99A] border border-white/20">
                 Buổi học hoàn thành xuất sắc
               </span>
-              <h3 className="text-xl font-extrabold text-white mt-1">
+              <h3 className="text-xl font-black text-white mt-2">
                 Kỷ Luật Tạo Nên Sự Xuất Sắc!
               </h3>
-              <p className="text-xs text-slate-300 mt-1">
+              <p className="text-xs text-white/80 mt-1 font-medium">
                 Hai bạn đã giữ vững cam kết và cùng vượt qua các bài tập trọng tâm.
               </p>
             </div>
@@ -98,60 +96,60 @@ export const PostSessionModal: React.FC<PostSessionModalProps> = ({
               <div className="grid grid-cols-2 gap-3">
                 
                 {/* 100% Deposit Refund */}
-                <div className="p-3.5 rounded-2xl bg-slate-950 border border-emerald-500/30 flex flex-col justify-between">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-400">
-                    <Wallet className="w-4 h-4" />
+                <div className="p-4 rounded-2xl bg-[#F8F5EE] border border-[#365C4A]/15 flex flex-col justify-between">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800">
+                    <Wallet className="w-4 h-4 text-emerald-700" />
                     <span>Hoàn 100% Cọc</span>
                   </div>
-                  <div className="text-2xl font-black text-white font-mono mt-1">
+                  <div className="text-2xl font-black text-[#365C4A] font-mono mt-1">
                     +50.000đ
                   </div>
-                  <span className="text-[10px] text-slate-400 mt-1">Học miễn phí hoàn toàn</span>
+                  <span className="text-[10px] text-[#553F35]/70 mt-1 font-semibold">Học miễn phí hoàn toàn</span>
                 </div>
 
                 {/* Streak Increment */}
-                <div className="p-3.5 rounded-2xl bg-slate-950 border border-amber-500/30 flex flex-col justify-between">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-amber-400">
-                    <Flame className="w-4 h-4 fill-amber-400" />
+                <div className="p-4 rounded-2xl bg-[#F8F5EE] border border-[#365C4A]/15 flex flex-col justify-between">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-[#D89C57]">
+                    <Flame className="w-4 h-4 fill-[#D89C57] text-[#D89C57]" />
                     <span>Chuỗi Kỷ Luật</span>
                   </div>
-                  <div className="text-2xl font-black text-white font-mono mt-1">
+                  <div className="text-2xl font-black text-[#365C4A] font-mono mt-1">
                     +{currentUser.streak_days + 1} Ngày
                   </div>
-                  <span className="text-[10px] text-slate-400 mt-1">+25 phút tự học tích lũy</span>
+                  <span className="text-[10px] text-[#553F35]/70 mt-1 font-semibold">+25 phút tự học tích lũy</span>
                 </div>
 
               </div>
 
               {/* Retention Survey Question */}
-              <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2">
-                <label className="block text-xs font-bold text-slate-200">
+              <div className="p-4 rounded-2xl bg-[#F8F5EE] border border-[#365C4A]/15 space-y-2">
+                <label className="block text-xs font-bold text-[#365C4A]">
                   Khảo sát đo lường: Bạn có muốn giữ bạn học này ({partnerName}) cho buổi tiếp theo?
                 </label>
                 <div className="grid grid-cols-2 gap-2 pt-1">
                   <button
                     type="button"
                     onClick={() => setRetentionChoice('keep')}
-                    className={`p-3 rounded-xl border text-xs font-semibold flex flex-col items-center justify-center gap-1 transition-all ${
+                    className={`p-3 rounded-2xl border text-xs font-bold flex flex-col items-center justify-center gap-1 transition-all ${
                       retentionChoice === 'keep'
-                        ? 'bg-indigo-600/20 border-indigo-500 text-white shadow-md'
-                        : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+                        ? 'bg-[#365C4A] border-[#365C4A] text-white shadow-md'
+                        : 'bg-white border-[#365C4A]/15 text-[#553F35] hover:border-[#365C4A]'
                     }`}
                   >
-                    <Users className="w-4 h-4 text-indigo-400" />
+                    <Users className="w-4 h-4" />
                     <span>Giữ bạn học này</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setRetentionChoice('change')}
-                    className={`p-3 rounded-xl border text-xs font-semibold flex flex-col items-center justify-center gap-1 transition-all ${
+                    className={`p-3 rounded-2xl border text-xs font-bold flex flex-col items-center justify-center gap-1 transition-all ${
                       retentionChoice === 'change'
-                        ? 'bg-indigo-600/20 border-indigo-500 text-white shadow-md'
-                        : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+                        ? 'bg-[#365C4A] border-[#365C4A] text-white shadow-md'
+                        : 'bg-white border-[#365C4A]/15 text-[#553F35] hover:border-[#365C4A]'
                     }`}
                   >
-                    <Repeat className="w-4 h-4 text-amber-400" />
+                    <Repeat className="w-4 h-4" />
                     <span>Đổi bạn học mới</span>
                   </button>
                 </div>
@@ -162,57 +160,57 @@ export const PostSessionModal: React.FC<PostSessionModalProps> = ({
                 <button
                   onClick={handleFinish}
                   disabled={isSubmitting}
-                  className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-sm shadow-xl shadow-emerald-600/25 transition-all flex items-center justify-center gap-2"
+                  className="w-full py-3.5 rounded-full bg-[#365C4A] hover:bg-[#2B4A3B] text-white font-black text-xs shadow-xl shadow-[#365C4A]/25 transition-all flex items-center justify-center gap-2 active:scale-98"
                 >
-                  <CheckCircle2 className="w-4 h-4" />
+                  <CheckCircle2 className="w-4 h-4 text-[#A7B99A]" />
                   <span>{isSubmitting ? 'Đang lưu đối soát...' : 'Xác Nhận & Trở Về Bảng Tin'}</span>
                 </button>
 
-                {/* Simulated Missed Session Button for Testing */}
+                {/* Missed session report button */}
                 <button
                   onClick={() => setIsMissedMode(true)}
-                  className="text-[11px] text-slate-500 hover:text-rose-400 text-center py-1 transition-colors"
+                  className="text-[11px] text-[#553F35]/70 hover:text-rose-600 text-center py-1 transition-colors font-medium"
                 >
-                  [Kiểm thử giám khảo] Mô phỏng tình huống "Báo vắng / Bùng học" trừ cọc
+                  Báo cáo đối phương vắng mặt (Xử lý trừ cọc)
                 </button>
               </div>
             </div>
           </div>
         ) : (
-          /* Missed Session Penalty Simulation View */
+          /* Missed Session Penalty View */
           <div>
-            <div className="p-6 bg-rose-950/40 border-b border-rose-900/60 text-center">
-              <div className="w-14 h-14 rounded-2xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center mx-auto text-rose-400 mb-2">
+            <div className="p-6 bg-rose-50 border-b border-rose-200 text-center">
+              <div className="w-14 h-14 rounded-2xl bg-rose-100 border border-rose-300 flex items-center justify-center mx-auto text-rose-600 mb-2">
                 <ShieldAlert className="w-7 h-7" />
               </div>
-              <h3 className="text-lg font-bold text-white">Mô Phỏng Xử Lý Bùng Học</h3>
-              <p className="text-xs text-rose-300 mt-1">
-                Cơ chế chế tài Quỹ Cam Kết Kỷ Luật theo nghiên cứu của Kahneman & Tversky
+              <h3 className="text-lg font-black text-rose-900">Xử Lý Bùng Học / Vắng Mặt</h3>
+              <p className="text-xs text-rose-800 mt-1 font-medium">
+                Cơ chế chế tài Quỹ Cam Kết Kỷ Luật bảo vệ sinh viên nghiêm túc
               </p>
             </div>
 
-            <div className="p-6 space-y-4 text-xs text-slate-300">
-              <p>
-                Nếu sinh viên không vào phòng học hoặc tự ý hủy hẹn không lý do, hệ thống tự động trừ <strong className="text-white">10.000đ</strong> tiền cọc:
+            <div className="p-6 space-y-4 text-xs text-[#553F35]">
+              <p className="leading-relaxed">
+                Nếu sinh viên không vào phòng học hoặc tự ý hủy hẹn không lý do, hệ thống tự động trừ <strong className="text-rose-700">10.000đ</strong> tiền cọc:
               </p>
               
-              <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+              <div className="p-3.5 rounded-2xl bg-[#F8F5EE] border border-[#365C4A]/15 space-y-2 font-medium">
                 <div className="flex justify-between">
                   <span>Trừ tiền cọc vi phạm:</span>
-                  <span className="font-mono font-bold text-rose-400">-10.000đ</span>
+                  <span className="font-mono font-black text-rose-600">-10.000đ</span>
                 </div>
-                <div className="flex justify-between text-slate-400 pl-3">
+                <div className="flex justify-between text-[#553F35]/80 pl-3">
                   <span>↳ Đền bù bạn học bị leo cây (50%):</span>
-                  <span className="font-mono text-emerald-400">+5.000đ</span>
+                  <span className="font-mono font-bold text-emerald-700">+5.000đ</span>
                 </div>
-                <div className="flex justify-between text-slate-400 pl-3">
+                <div className="flex justify-between text-[#553F35]/80 pl-3">
                   <span>↳ Phí vận hành hệ thống (50%):</span>
-                  <span className="font-mono text-indigo-400">+5.000đ</span>
+                  <span className="font-mono font-bold text-[#365C4A]">+5.000đ</span>
                 </div>
               </div>
 
               {missedResult && (
-                <div className="p-3 rounded-xl bg-rose-900/40 border border-rose-500 text-rose-200">
+                <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 font-bold">
                   ✓ Đã ghi nhận trừ 10.000đ và chuyển đền bù cho đối phương thành công!
                 </div>
               )}
@@ -221,7 +219,7 @@ export const PostSessionModal: React.FC<PostSessionModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsMissedMode(false)}
-                  className="px-4 py-2 text-xs text-slate-400 hover:text-white"
+                  className="px-4 py-2 text-xs text-[#553F35]/70 hover:text-[#365C4A] font-bold"
                 >
                   Quay lại
                 </button>
@@ -229,7 +227,7 @@ export const PostSessionModal: React.FC<PostSessionModalProps> = ({
                   type="button"
                   onClick={handleSimulateMissed}
                   disabled={isSubmitting || Boolean(missedResult)}
-                  className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold shadow-lg shadow-rose-600/25 transition-all"
+                  className="px-5 py-2.5 rounded-full bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-md transition-all active:scale-95"
                 >
                   {isSubmitting ? 'Đang trừ cọc...' : 'Kích hoạt trừ cọc 10.000đ'}
                 </button>

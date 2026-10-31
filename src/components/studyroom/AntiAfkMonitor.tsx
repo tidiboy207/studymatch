@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ShieldAlert, AlertTriangle, Volume2, Clock, CheckCircle2, Zap } from 'lucide-react';
+import { ShieldAlert, AlertTriangle, Zap } from 'lucide-react';
 import { dataService } from '../../services/dataService';
 
 interface AntiAfkMonitorProps {
@@ -94,7 +94,7 @@ export const AntiAfkMonitor: React.FC<AntiAfkMonitorProps> = ({
     }, 6000);
   };
 
-  // Nút Demo nhanh AFK (5 giây) dành cho ban giám khảo
+  // Nút kiểm tra cơ chế cảnh báo AFK
   const handleStart5sTest = () => {
     setTestMode(true);
     setTestCountdown(5);
@@ -113,69 +113,69 @@ export const AntiAfkMonitor: React.FC<AntiAfkMonitorProps> = ({
   };
 
   return (
-    <div className={`p-4 rounded-2xl border transition-all ${
+    <div className={`p-5 rounded-3xl border transition-all ${
       isAlerting
-        ? 'bg-rose-950/80 border-rose-500 shadow-2xl shadow-rose-600/30 animate-pulse'
-        : 'bg-slate-900 border-slate-800'
+        ? 'bg-rose-50 border-rose-500 shadow-xl shadow-rose-600/20 animate-pulse'
+        : 'bg-white border-[#365C4A]/20 shadow-md'
     }`}>
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-400">
-          <ShieldAlert className="w-4 h-4 text-amber-400" />
-          <span>Giám sát Kỷ luật Anti-AFK</span>
+      <div className="flex items-center justify-between mb-3 pb-2 border-b border-[#365C4A]/10">
+        <div className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-[#365C4A]">
+          <ShieldAlert className="w-4 h-4 text-[#D89C57]" />
+          <span>Giám Sát Kỷ Luật Anti-AFK</span>
         </div>
 
-        <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold ${
+        <span className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full font-bold ${
           afkAlertCount > 0
-            ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
-            : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+            ? 'bg-rose-100 text-rose-800 border border-rose-300'
+            : 'bg-emerald-50 text-emerald-800 border border-emerald-300'
         }`}>
           {afkAlertCount} Vi phạm
         </span>
       </div>
 
       {/* Visibility Status */}
-      <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+      <div className="p-3.5 rounded-2xl bg-[#F8F5EE] border border-[#365C4A]/15 space-y-2">
         <div className="flex items-center justify-between text-xs">
-          <span className="text-slate-400">Trạng thái màn hình:</span>
+          <span className="text-[#553F35]/70 font-semibold">Trạng thái màn hình:</span>
           {isTabVisible ? (
-            <span className="text-emerald-400 font-semibold flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-emerald-800 font-bold flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
               Đang tập trung trong phòng
             </span>
           ) : (
-            <span className="text-rose-400 font-bold flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-rose-400 animate-ping" />
+            <span className="text-rose-700 font-black flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-rose-600 animate-ping" />
               Đang ở tab khác ({hiddenSeconds}s)
             </span>
           )}
         </div>
 
-        <p className="text-[11px] text-slate-400 leading-relaxed">
+        <p className="text-[11px] text-[#553F35]/80 leading-relaxed font-medium">
           Tự động phát hiện khi chuyển sang Facebook/TikTok quá 3 phút để phát chuông nhắc nhở và ghi nhận điểm kỷ luật.
         </p>
       </div>
 
       {/* Alert Warning Active Banner */}
       {isAlerting && (
-        <div className="mt-3 p-3 rounded-xl bg-rose-900/60 border border-rose-500 text-xs text-rose-200 flex items-center gap-2">
-          <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0 animate-bounce" />
+        <div className="mt-3 p-3.5 rounded-2xl bg-rose-100 border border-rose-300 text-xs text-rose-900 flex items-center gap-2">
+          <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 animate-bounce" />
           <div>
-            <strong className="text-white block font-bold">CẢNH BÁO XAO NHÃNG:</strong>
-            Bạn đã rời phòng học! Hãy tập trung hoàn thành bài tập cùng bạn học.
+            <strong className="text-rose-950 block font-black">CẢNH BÁO XAO NHÃNG:</strong>
+            Bạn đã rời phòng học! Hãy quay lại tập trung hoàn thành bài tập cùng bạn học.
           </div>
         </div>
       )}
 
-      {/* Quick 5s Demo Test Button for Judges */}
-      <div className="mt-3 pt-2 border-t border-slate-800 flex items-center justify-between gap-2">
-        <div className="text-[10px] text-slate-500">Demo hội đồng:</div>
+      {/* Quick Test Button */}
+      <div className="mt-3 pt-2.5 border-t border-[#365C4A]/10 flex items-center justify-between gap-2">
+        <div className="text-[10px] text-[#553F35]/60 font-medium">Kiểm tra cảm biến:</div>
         <button
           onClick={handleStart5sTest}
           disabled={testMode || isAlerting}
-          className="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-semibold transition-all flex items-center gap-1.5 disabled:opacity-50"
+          className="px-3 py-1.5 rounded-full bg-[#F8F5EE] hover:bg-[#EBE8DF] text-[#365C4A] border border-[#365C4A]/20 text-xs font-bold transition-all flex items-center gap-1.5 disabled:opacity-50"
         >
-          <Zap className="w-3.5 h-3.5" />
-          <span>{testMode ? `Đếm ngược ${testCountdown}s...` : 'Test nhanh AFK (5 giây)'}</span>
+          <Zap className="w-3.5 h-3.5 text-[#D89C57]" />
+          <span>{testMode ? `Đếm ngược ${testCountdown}s...` : 'Kiểm tra chuông AFK'}</span>
         </button>
       </div>
     </div>

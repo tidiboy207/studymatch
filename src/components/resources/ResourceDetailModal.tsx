@@ -11,8 +11,7 @@ import {
   RotateCw,
   ChevronLeft,
   ChevronRight,
-  ShieldCheck,
-  Bookmark
+  ShieldCheck
 } from 'lucide-react';
 
 interface ResourceDetailModalProps {
@@ -59,7 +58,10 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
 
   const handleSelectOption = (qIdx: number, optIdx: number) => {
     if (submittedQuiz) return;
-    setUserAnswers({ ...userAnswers, [qIdx]: optIdx });
+    setUserAnswers((prev) => ({
+      ...prev,
+      [qIdx]: optIdx
+    }));
   };
 
   const handleResetQuiz = () => {
@@ -76,105 +78,105 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
-      <div className="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+      <div className="bg-white border border-[#365C4A]/25 rounded-3xl w-full max-w-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         
         {/* Header */}
-        <div className="p-5 bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950/40 border-b border-slate-800 flex items-start justify-between gap-4">
+        <div className="p-6 bg-gradient-to-r from-[#365C4A] to-[#264234] text-white flex items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[10px] font-bold uppercase tracking-wider">
+              <span className="px-2.5 py-0.5 rounded-full bg-white/15 text-[#A7B99A] border border-white/20 text-[10px] font-black uppercase tracking-wider">
                 {resource.resource_type}
               </span>
-              <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1">
+              <span className="text-xs text-[#A7B99A] font-bold flex items-center gap-1">
                 <ShieldCheck className="w-3.5 h-3.5" /> Bản quyền học thuật chuẩn
               </span>
             </div>
-            <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
+            <h2 className="text-base sm:text-xl font-black text-white tracking-tight">
               {resource.title}
             </h2>
-            <div className="flex items-center gap-2 mt-1 text-xs text-slate-400">
-              <span>{resource.subject}</span>
+            <div className="flex items-center gap-2 mt-1 text-xs text-white/80">
+              <span className="font-bold">{resource.subject}</span>
               <span>•</span>
-              <span className="text-emerald-400">{resource.topic}</span>
+              <span className="text-[#A7B99A] font-semibold">{resource.topic}</span>
             </div>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => onAttachToSession(resource.id)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all border ${
+              className={`px-3.5 py-2 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm ${
                 isAttached
-                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                  : 'bg-indigo-600 hover:bg-indigo-500 text-white border-transparent shadow'
+                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-300'
+                  : 'bg-white hover:bg-gray-100 text-[#365C4A]'
               }`}
             >
               <Paperclip className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">{isAttached ? 'Đã gắn vào phòng' : 'Gắn vào buổi học'}</span>
             </button>
-            <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-white">
+            <button onClick={onClose} className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors">
               <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
         {/* 3 Interactive Mode Tabs */}
-        <div className="flex border-b border-slate-800 bg-slate-950 px-5 gap-4">
+        <div className="flex border-b border-[#365C4A]/15 bg-[#F8F5EE] px-5 gap-3 sm:gap-6 overflow-x-auto">
           <button
             onClick={() => setActiveTab('notes')}
-            className={`py-3 text-xs font-bold border-b-2 transition-all flex items-center gap-2 ${
+            className={`py-3 text-xs sm:text-sm font-bold border-b-2 transition-all flex items-center gap-2 shrink-0 ${
               activeTab === 'notes'
-                ? 'border-indigo-500 text-white'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'border-[#365C4A] text-[#365C4A]'
+                : 'border-transparent text-[#553F35]/70 hover:text-[#365C4A]'
             }`}
           >
-            <BookOpen className="w-4 h-4 text-indigo-400" />
+            <BookOpen className="w-4 h-4 text-[#365C4A]" />
             <span>(1) Ghi chú & Bảng công thức</span>
           </button>
 
           <button
             onClick={() => setActiveTab('flashcards')}
-            className={`py-3 text-xs font-bold border-b-2 transition-all flex items-center gap-2 ${
+            className={`py-3 text-xs sm:text-sm font-bold border-b-2 transition-all flex items-center gap-2 shrink-0 ${
               activeTab === 'flashcards'
-                ? 'border-indigo-500 text-white'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'border-[#365C4A] text-[#365C4A]'
+                : 'border-transparent text-[#553F35]/70 hover:text-[#365C4A]'
             }`}
           >
-            <Sparkles className="w-4 h-4 text-emerald-400" />
-            <span>(2) Flashcards lật 2 mặt ({flashcards.length})</span>
+            <Sparkles className="w-4 h-4 text-[#D89C57]" />
+            <span>(2) Flashcards ({flashcards.length})</span>
           </button>
 
           <button
             onClick={() => setActiveTab('quiz')}
-            className={`py-3 text-xs font-bold border-b-2 transition-all flex items-center gap-2 ${
+            className={`py-3 text-xs sm:text-sm font-bold border-b-2 transition-all flex items-center gap-2 shrink-0 ${
               activeTab === 'quiz'
-                ? 'border-indigo-500 text-white'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'border-[#365C4A] text-[#365C4A]'
+                : 'border-transparent text-[#553F35]/70 hover:text-[#365C4A]'
             }`}
           >
-            <HelpCircle className="w-4 h-4 text-amber-400" />
-            <span>(3) Mini-Quiz Trắc nghiệm ({resource.mini_quiz?.length || 0} câu)</span>
+            <HelpCircle className="w-4 h-4 text-[#365C4A]" />
+            <span>(3) Mini-Quiz ({resource.mini_quiz?.length || 0} câu)</span>
           </button>
         </div>
 
         {/* Tab Body */}
-        <div className="p-6 overflow-y-auto flex-1 space-y-6">
+        <div className="p-6 overflow-y-auto flex-1 space-y-6 bg-white">
           
           {/* TAB 1: GHI CHÚ TÓM TẮT & CÔNG THỨC */}
           {activeTab === 'notes' && (
             <div className="space-y-4">
               {/* Formula banner */}
-              <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-950/70 via-slate-900 to-indigo-950/70 border border-indigo-500/40 shadow-inner">
-                <div className="text-xs font-bold text-indigo-300 uppercase tracking-wider mb-1">
+              <div className="p-4 rounded-2xl bg-[#F8F5EE] border border-[#365C4A]/20 shadow-sm">
+                <div className="text-xs font-bold text-[#365C4A] uppercase tracking-wider mb-1">
                   Bảng tóm tắt công thức cốt lõi:
                 </div>
-                <div className="font-mono text-sm text-emerald-300 font-semibold">
+                <div className="font-mono text-sm text-[#365C4A] font-bold">
                   {resource.formula_summary}
                 </div>
               </div>
 
               {/* Markdown note body */}
-              <div className="p-5 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 text-sm leading-relaxed whitespace-pre-wrap font-sans">
+              <div className="p-5 rounded-2xl bg-[#FDFCF9] border border-[#365C4A]/15 text-[#553F35] text-sm leading-relaxed whitespace-pre-wrap font-sans">
                 {resource.content_markdown}
               </div>
             </div>
@@ -183,9 +185,9 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
           {/* TAB 2: FLASHCARDS LẬT 2 MẶT */}
           {activeTab === 'flashcards' && (
             <div className="flex flex-col items-center justify-center space-y-4 py-2">
-              <div className="flex items-center justify-between w-full max-w-lg text-xs text-slate-400">
+              <div className="flex items-center justify-between w-full max-w-lg text-xs text-[#553F35]/70 font-semibold">
                 <span>Thẻ {currentCardIndex + 1} / {flashcards.length}</span>
-                <span className="text-indigo-400 flex items-center gap-1">
+                <span className="text-[#365C4A] flex items-center gap-1 font-bold">
                   <RotateCw className="w-3.5 h-3.5" /> Bấm vào thẻ để lật
                 </span>
               </div>
@@ -193,35 +195,35 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
               {/* 3D Flip Card */}
               <div
                 onClick={() => setIsFlipped(!isFlipped)}
-                className="w-full max-w-lg h-64 rounded-2xl cursor-pointer perspective-1000"
+                className="w-full max-w-lg h-64 rounded-3xl cursor-pointer perspective-1000"
               >
                 <div
-                  className={`relative w-full h-full rounded-2xl shadow-2xl transition-transform duration-500 transform-style-3d border ${
-                    isFlipped ? 'rotate-y-180 border-emerald-500/50' : 'border-indigo-500/50'
+                  className={`relative w-full h-full rounded-3xl shadow-xl transition-transform duration-500 transform-style-3d border ${
+                    isFlipped ? 'rotate-y-180 border-[#A7B99A]' : 'border-[#365C4A]/30'
                   }`}
                 >
                   {/* Mặt trước (Front) */}
-                  <div className="absolute inset-0 backface-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/80 p-6 flex flex-col justify-between">
-                    <span className="text-[11px] font-bold text-indigo-400 uppercase tracking-wider">
+                  <div className="absolute inset-0 backface-hidden rounded-3xl bg-[#F8F5EE] p-6 flex flex-col justify-between border border-[#365C4A]/20">
+                    <span className="text-[11px] font-black text-[#365C4A] uppercase tracking-wider">
                       MẶT TRƯỚC: CÂU HỎI / KHÁI NIỆM
                     </span>
-                    <div className="text-base sm:text-lg font-bold text-white text-center px-4">
+                    <div className="text-base sm:text-lg font-bold text-[#553F35] text-center px-4">
                       {currentCard?.front}
                     </div>
-                    <div className="text-center text-xs text-slate-500">
+                    <div className="text-center text-xs text-[#553F35]/60 font-medium">
                       Chạm để xem công thức / đáp án ↻
                     </div>
                   </div>
 
                   {/* Mặt sau (Back) */}
-                  <div className="absolute inset-0 backface-hidden rotate-y-180 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/80 p-6 flex flex-col justify-between">
-                    <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">
+                  <div className="absolute inset-0 backface-hidden rotate-y-180 rounded-3xl bg-gradient-to-br from-[#365C4A] to-[#264234] text-white p-6 flex flex-col justify-between border border-[#A7B99A]">
+                    <span className="text-[11px] font-black text-[#A7B99A] uppercase tracking-wider">
                       MẶT SAU: LỜI GIẢI / CÔNG THỨC CHÍNH XÁC
                     </span>
-                    <div className="text-base sm:text-lg font-bold text-emerald-300 text-center px-4 font-mono">
+                    <div className="text-base sm:text-lg font-bold text-[#FAEFDF] text-center px-4 font-mono">
                       {currentCard?.back}
                     </div>
-                    <div className="text-center text-xs text-emerald-400/60">
+                    <div className="text-center text-xs text-[#A7B99A] font-bold">
                       Đã ghi nhớ kiến thức này!
                     </div>
                   </div>
@@ -232,21 +234,21 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
               <div className="flex items-center gap-3 pt-2">
                 <button
                   onClick={handlePrevCard}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-all"
+                  className="px-4 py-2 rounded-full bg-[#F8F5EE] hover:bg-[#EBE8DF] text-[#365C4A] text-xs font-bold flex items-center gap-1.5 transition-all border border-[#365C4A]/20"
                 >
                   <ChevronLeft className="w-4 h-4" />
                   <span>Thẻ trước</span>
                 </button>
                 <button
                   onClick={() => setIsFlipped(!isFlipped)}
-                  className="px-4 py-2 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/40 text-indigo-200 border border-indigo-500/40 text-xs font-semibold flex items-center gap-1.5 transition-all"
+                  className="px-5 py-2 rounded-full bg-[#365C4A] hover:bg-[#2B4A3B] text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-md shadow-[#365C4A]/20"
                 >
-                  <RotateCw className="w-4 h-4" />
+                  <RotateCw className="w-4 h-4 text-[#A7B99A]" />
                   <span>Lật thẻ</span>
                 </button>
                 <button
                   onClick={handleNextCard}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-all"
+                  className="px-4 py-2 rounded-full bg-[#F8F5EE] hover:bg-[#EBE8DF] text-[#365C4A] text-xs font-bold flex items-center gap-1.5 transition-all border border-[#365C4A]/20"
                 >
                   <span>Thẻ tiếp theo</span>
                   <ChevronRight className="w-4 h-4" />
@@ -259,16 +261,16 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
           {activeTab === 'quiz' && (
             <div className="space-y-6">
               {submittedQuiz && (
-                <div className="p-4 rounded-xl bg-indigo-950/60 border border-indigo-500/50 flex items-center justify-between">
+                <div className="p-5 rounded-2xl bg-[#F8F5EE] border border-[#365C4A]/30 flex items-center justify-between">
                   <div>
-                    <div className="text-xs font-semibold text-indigo-300">Kết quả bài trắc nghiệm:</div>
-                    <div className="text-2xl font-black text-white font-mono mt-0.5">
+                    <div className="text-xs font-bold text-[#553F35]">Kết quả bài trắc nghiệm:</div>
+                    <div className="text-2xl font-black text-[#365C4A] font-mono mt-0.5">
                       {calculateQuizScore()} / {resource.mini_quiz.length} câu đúng
                     </div>
                   </div>
                   <button
                     onClick={handleResetQuiz}
-                    className="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all"
+                    className="px-4 py-2 rounded-full bg-[#365C4A] hover:bg-[#2B4A3B] text-white text-xs font-bold transition-all shadow-md shadow-[#365C4A]/20"
                   >
                     Làm lại bài
                   </button>
@@ -277,27 +279,29 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
 
               {resource.mini_quiz.map((q, qIdx) => {
                 const selectedOpt = userAnswers[qIdx];
+                const isChosen = selectedOpt !== undefined;
+
                 return (
-                  <div key={qIdx} className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
-                    <div className="text-sm font-bold text-white flex items-start gap-2">
-                      <span className="w-6 h-6 rounded-full bg-indigo-600/20 text-indigo-300 text-xs flex items-center justify-center shrink-0 border border-indigo-500/40">
+                  <div key={qIdx} className="p-5 rounded-3xl bg-[#F8F5EE] border border-[#365C4A]/15 space-y-3 shadow-sm">
+                    <div className="text-sm font-bold text-[#365C4A] flex items-start gap-2.5">
+                      <span className="w-6 h-6 rounded-full bg-[#365C4A] text-white text-xs font-black flex items-center justify-center shrink-0 shadow-sm">
                         {qIdx + 1}
                       </span>
-                      <span>{q.question}</span>
+                      <span className="pt-0.5">{q.question}</span>
                     </div>
 
                     {/* Options list */}
                     <div className="space-y-2 pt-1">
                       {q.options.map((opt, optIdx) => {
-                        const isChosen = selectedOpt === optIdx;
+                        const optChosen = selectedOpt === optIdx;
                         const isCorrect = q.correctIndex === optIdx;
 
-                        let style = 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800/80';
+                        let style = 'bg-white border-[#365C4A]/15 text-[#553F35] hover:border-[#365C4A]';
                         if (submittedQuiz) {
-                          if (isCorrect) style = 'bg-emerald-500/20 border-emerald-500 text-emerald-200 font-semibold';
-                          else if (isChosen && !isCorrect) style = 'bg-rose-500/20 border-rose-500 text-rose-200';
-                        } else if (isChosen) {
-                          style = 'bg-indigo-600/30 border-indigo-500 text-white font-semibold shadow-sm';
+                          if (isCorrect) style = 'bg-emerald-50 border-emerald-500 text-emerald-900 font-bold';
+                          else if (optChosen && !isCorrect) style = 'bg-rose-50 border-rose-500 text-rose-900';
+                        } else if (optChosen) {
+                          style = 'bg-[#365C4A] border-[#365C4A] text-white font-bold shadow-md';
                         }
 
                         return (
@@ -305,14 +309,14 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
                             key={optIdx}
                             type="button"
                             onClick={() => handleSelectOption(qIdx, optIdx)}
-                            className={`w-full text-left p-3 rounded-xl border text-xs transition-all flex items-center justify-between ${style}`}
+                            className={`w-full text-left p-3.5 rounded-2xl border text-xs transition-all flex items-center justify-between shadow-sm ${style}`}
                           >
                             <span>{String.fromCharCode(65 + optIdx)}. {opt}</span>
                             {submittedQuiz && isCorrect && (
-                              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                             )}
-                            {submittedQuiz && isChosen && !isCorrect && (
-                              <XCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                            {submittedQuiz && optChosen && !isCorrect && (
+                              <XCircle className="w-4 h-4 text-rose-600 shrink-0" />
                             )}
                           </button>
                         );
@@ -321,8 +325,8 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
 
                     {/* Explanation */}
                     {submittedQuiz && (
-                      <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300 mt-2">
-                        <strong className="text-emerald-400">Giải thích: </strong>
+                      <div className="p-3.5 rounded-2xl bg-white border border-[#365C4A]/20 text-xs text-[#553F35] mt-2 leading-relaxed">
+                        <strong className="text-emerald-700">Giải thích: </strong>
                         {q.explanation}
                       </div>
                     )}
@@ -335,7 +339,7 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
                   <button
                     onClick={() => setSubmittedQuiz(true)}
                     disabled={Object.keys(userAnswers).length === 0}
-                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/25 disabled:opacity-50 transition-all"
+                    className="px-6 py-3 rounded-full bg-[#365C4A] hover:bg-[#2B4A3B] text-white font-bold text-xs shadow-xl shadow-[#365C4A]/25 disabled:opacity-50 transition-all active:scale-98"
                   >
                     Chấm điểm bài trắc nghiệm
                   </button>

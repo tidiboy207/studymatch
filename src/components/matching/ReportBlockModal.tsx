@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { MatchCandidate } from '../../types';
-import { ShieldAlert, X, AlertTriangle, Ban, Flag } from 'lucide-react';
+import { X, AlertTriangle, Ban, Flag } from 'lucide-react';
 
 interface ReportBlockModalProps {
   candidate: MatchCandidate | null;
@@ -44,24 +44,24 @@ export const ReportBlockModal: React.FC<ReportBlockModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-white border border-[#365C4A]/25 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">
         
         {/* Header */}
-        <div className="px-5 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-rose-400 font-bold text-sm">
-            <AlertTriangle className="w-4 h-4" />
+        <div className="px-6 py-4 bg-rose-50 border-b border-rose-200 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-rose-800 font-black text-sm">
+            <AlertTriangle className="w-4 h-4 text-rose-600" />
             <span>An Toàn Cộng Đồng & Kỷ Luật</span>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-white">
-            <X className="w-4 h-4" />
+          <button onClick={onClose} className="p-1.5 rounded-full hover:bg-rose-100 text-rose-800 transition-colors">
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
-          <div className="text-xs text-slate-300">
-            Bạn đang thao tác với tài khoản: <strong className="text-white">{candidate.profile.display_name}</strong> ({candidate.profile.university})
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div className="text-xs text-[#553F35]">
+            Bạn đang thao tác với tài khoản: <strong className="text-[#365C4A] font-bold">{candidate.profile.display_name}</strong> ({candidate.profile.university})
           </div>
 
           {/* Action selection */}
@@ -69,10 +69,10 @@ export const ReportBlockModal: React.FC<ReportBlockModalProps> = ({
             <button
               type="button"
               onClick={() => setActionType('block')}
-              className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+              className={`p-3 rounded-2xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
                 actionType === 'block'
-                  ? 'bg-rose-500/20 border-rose-500 text-rose-300'
-                  : 'bg-slate-950 border-slate-800 text-slate-400'
+                  ? 'bg-rose-50 border-rose-400 text-rose-800 shadow-sm'
+                  : 'bg-[#F8F5EE] border-[#365C4A]/15 text-[#553F35]'
               }`}
             >
               <Ban className="w-3.5 h-3.5" />
@@ -82,10 +82,10 @@ export const ReportBlockModal: React.FC<ReportBlockModalProps> = ({
             <button
               type="button"
               onClick={() => setActionType('report')}
-              className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+              className={`p-3 rounded-2xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
                 actionType === 'report'
-                  ? 'bg-amber-500/20 border-amber-500 text-amber-300'
-                  : 'bg-slate-950 border-slate-800 text-slate-400'
+                  ? 'bg-[#D89C57]/20 border-[#D89C57] text-[#D89C57] shadow-sm'
+                  : 'bg-[#F8F5EE] border-[#365C4A]/15 text-[#553F35]'
               }`}
             >
               <Flag className="w-3.5 h-3.5" />
@@ -95,17 +95,17 @@ export const ReportBlockModal: React.FC<ReportBlockModalProps> = ({
 
           {/* Reason options */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Lý do chính</label>
+            <label className="block text-xs font-bold text-[#365C4A] mb-1.5">Lý do chính</label>
             <div className="space-y-1.5">
               {reasons.map((r) => (
                 <button
                   key={r}
                   type="button"
                   onClick={() => setReason(r)}
-                  className={`w-full text-left px-3 py-2 rounded-lg text-xs transition-all ${
+                  className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs transition-all font-medium ${
                     reason === r
-                      ? 'bg-indigo-600/20 border border-indigo-500/50 text-white'
-                      : 'bg-slate-950 border border-slate-800/80 text-slate-400 hover:text-slate-200'
+                      ? 'bg-[#365C4A] text-white font-bold'
+                      : 'bg-[#F8F5EE] border border-[#365C4A]/15 text-[#553F35] hover:border-[#365C4A]'
                   }`}
                 >
                   {reason === r ? `● ${r}` : `○ ${r}`}
@@ -116,13 +116,13 @@ export const ReportBlockModal: React.FC<ReportBlockModalProps> = ({
 
           {/* Custom detail */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Ghi chú bổ sung (tùy chọn)</label>
+            <label className="block text-xs font-bold text-[#365C4A] mb-1.5">Ghi chú bổ sung (tùy chọn)</label>
             <textarea
               value={customDetail}
               onChange={(e) => setCustomDetail(e.target.value)}
               placeholder="Mô tả cụ thể sự việc để ban quản trị xử lý..."
               rows={2}
-              className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+              className="w-full px-3.5 py-2.5 rounded-2xl bg-[#F8F5EE] border border-[#365C4A]/20 text-[#553F35] text-xs placeholder-[#553F35]/50 focus:outline-none focus:border-[#365C4A]"
             />
           </div>
 
@@ -131,14 +131,14 @@ export const ReportBlockModal: React.FC<ReportBlockModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-3.5 py-1.5 text-xs text-slate-400 hover:text-white"
+              className="px-4 py-2 text-xs font-bold text-[#553F35]/70 hover:text-[#365C4A]"
             >
               Hủy bỏ
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-4 py-2 text-xs font-bold rounded-xl bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/25 disabled:opacity-50"
+              className="px-5 py-2.5 text-xs font-black rounded-full bg-rose-600 hover:bg-rose-700 text-white shadow-md shadow-rose-600/25 disabled:opacity-50 transition-all active:scale-95"
             >
               {isSubmitting ? 'Đang gửi...' : actionType === 'block' ? 'Xác nhận Chặn' : 'Gửi Báo Cáo'}
             </button>

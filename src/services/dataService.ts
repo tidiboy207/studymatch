@@ -81,7 +81,7 @@ function initStorage() {
     localStorage.setItem(KEYS.PAYMENTS, JSON.stringify(initialPayments));
   }
   if (!localStorage.getItem(KEYS.MATCH_REQUESTS)) {
-    // Demo pending invite: Sinh viên B gửi lời mời cho Sinh viên A
+    // Lời mời kết nối bạn học ban đầu
     const initialRequests: MatchRequest[] = [
       {
         id: 'req-seed-01',
@@ -104,7 +104,7 @@ function initStorage() {
     ];
     const initialSessions: StudySession[] = [
       {
-        id: 'session-demo-01',
+        id: 'session-init-01',
         user_a_id: STUDENT_A_ID,
         user_b_id: STUDENT_B_ID,
         subject: 'MI1111 - Giải tích 1',
@@ -115,7 +115,7 @@ function initStorage() {
         user_b_confirmed: false,
         goals_checklist: defaultGoals,
         resource_id: '11111111-1111-1111-1111-111111111103', // Cẩm nang Tích phân suy rộng
-        external_meet_url: 'https://meet.google.com/hust-studymatch-demo',
+        external_meet_url: 'https://meet.google.com/studymatch-peer-room',
         status: 'upcoming',
         partner_retention_choice: null,
         afk_alert_count: 0,
@@ -212,7 +212,7 @@ export const dataService = {
       return { success: true };
     }
 
-    // Chế độ Demo: Đăng nhập với tài khoản Google mô phỏng
+    // Đăng nhập nhanh với tài khoản Google định danh
     localStorage.setItem(KEYS.AUTH_SESSION, JSON.stringify({ isLoggedIn: true, userId: STUDENT_A_ID }));
     await this.switchUserRole('A');
     const user = await this.getCurrentUser();

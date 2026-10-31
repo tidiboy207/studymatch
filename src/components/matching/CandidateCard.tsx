@@ -40,15 +40,15 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
 
   // Level badge info
   const levelLabels = {
-    1: { text: 'Mất gốc cục bộ', color: 'bg-rose-500/20 text-rose-300 border-rose-500/30' },
-    2: { text: 'Cơ bản vững', color: 'bg-blue-500/20 text-blue-300 border-blue-500/30' },
-    3: { text: 'Khá giỏi săn A/A+', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' }
+    1: { text: 'Mất gốc cục bộ', color: 'bg-rose-100 text-rose-800 border-rose-200' },
+    2: { text: 'Cơ bản vững', color: 'bg-blue-100 text-blue-800 border-blue-200' },
+    3: { text: 'Khá giỏi săn A/A+', color: 'bg-emerald-100 text-emerald-800 border-emerald-200' }
   };
 
   const currentLevelInfo = levelLabels[profile.self_level] || levelLabels[1];
 
   return (
-    <div className="relative rounded-2xl bg-slate-900 border border-slate-800 hover:border-[#A7B99A]/50 p-5 sm:p-6 shadow-xl transition-all flex flex-col justify-between group">
+    <div className="relative rounded-3xl bg-white border border-[#365C4A]/15 hover:border-[#365C4A] hover:shadow-xl p-5 sm:p-6 shadow-md transition-all flex flex-col justify-between group">
       
       {/* Top Banner: Rank & Score */}
       <div>
@@ -63,14 +63,14 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
                 <img
                   src={profile.avatar_url}
                   alt={profile.display_name}
-                  className="w-12 h-12 rounded-xl object-cover border border-[#A7B99A]/40 shadow-md group-hover:ring-2 group-hover:ring-[#A7B99A] transition-all"
+                  className="w-13 h-13 rounded-2xl object-cover border-2 border-[#365C4A]/30 shadow-md group-hover:scale-105 transition-transform"
                 />
               ) : (
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-[#365C4A] via-[#2F5242] to-[#A7B99A] flex items-center justify-center text-base font-extrabold text-white shadow-md">
+                <div className="w-13 h-13 rounded-2xl bg-gradient-to-tr from-[#365C4A] via-[#2F5242] to-[#A7B99A] flex items-center justify-center text-base font-extrabold text-white shadow-md">
                   {profile.display_name.charAt(0)}
                 </div>
               )}
-              <div className="absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full bg-slate-950 border border-[#A7B99A] text-[10px] font-bold text-[#A7B99A] flex items-center justify-center">
+              <div className="absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full bg-[#365C4A] text-white text-[10px] font-black flex items-center justify-center shadow">
                 #{rank}
               </div>
             </div>
@@ -79,24 +79,20 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
               <div className="flex items-center gap-2">
                 <h4
                   onClick={() => onViewProfile && onViewProfile(profile)}
-                  className="text-base font-bold text-white tracking-tight cursor-pointer hover:text-[#A7B99A] transition-colors"
+                  className="text-base font-black text-[#365C4A] tracking-tight cursor-pointer hover:underline transition-colors"
                 >
                   {profile.display_name}
                 </h4>
-                {profile.is_edu_verified ? (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" title="Sinh viên đã xác thực email .edu.vn">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                {profile.is_edu_verified && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300" title="Sinh viên đã xác thực email trường">
+                    <ShieldCheck className="w-3 h-3 text-emerald-600" />
                     .edu.vn
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
-                    Trải nghiệm
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">{profile.university}</p>
+              <p className="text-xs text-[#553F35]/80 font-medium mt-0.5">{profile.university}</p>
               {profile.major && (
-                <p className="text-[11px] text-[#A7B99A] font-semibold flex items-center gap-1 mt-0.5 truncate max-w-[210px]">
+                <p className="text-[11px] text-[#365C4A] font-bold flex items-center gap-1 mt-0.5 truncate max-w-[210px]">
                   <GraduationCap className="w-3.5 h-3.5 shrink-0" />
                   <span>{profile.major}</span>
                 </p>
@@ -106,11 +102,11 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
 
           {/* Compatibility Score Circle */}
           <div className="text-right shrink-0">
-            <div className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#365C4A]/40 to-[#A7B99A]/30 border border-[#A7B99A]/40 text-[#A7B99A] font-extrabold text-sm font-mono shadow-sm">
-              <Sparkles className="w-4 h-4 text-[#A7B99A]" />
+            <div className="inline-flex items-center gap-1 px-3 py-1.5 rounded-2xl bg-[#A7B99A]/20 border border-[#A7B99A]/50 text-[#365C4A] font-black text-sm font-mono shadow-sm">
+              <Sparkles className="w-4 h-4 text-[#D89C57]" />
               <span>{scoreDetails.totalScore}% HỢP</span>
             </div>
-            <div className="text-[10px] text-slate-400 mt-1">
+            <div className="text-[10px] text-[#553F35]/70 mt-1 font-semibold">
               Độ tương thích S
             </div>
           </div>
@@ -118,31 +114,31 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
 
         {/* Bio Preview Snippet if available */}
         {profile.bio && (
-          <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800/80 text-[11px] text-slate-300 italic mb-3.5 line-clamp-2">
+          <div className="p-3 rounded-2xl bg-[#F8F5EE] border border-[#365C4A]/10 text-xs text-[#553F35] italic mb-3.5 line-clamp-2 leading-relaxed">
             "{profile.bio}"
           </div>
         )}
 
         {/* Explicit Match Reason Banner */}
-        <div className="p-3 rounded-xl bg-[#365C4A]/25 border border-[#365C4A]/50 text-xs text-slate-200 mb-4 flex items-start gap-2">
-          <Sparkles className="w-4 h-4 text-[#A7B99A] shrink-0 mt-0.5" />
-          <div>
-            <strong className="text-white">Lý do ghép tối ưu:</strong> {scoreDetails.reason}
+        <div className="p-3.5 rounded-2xl bg-[#A7B99A]/15 border border-[#A7B99A]/30 text-xs text-[#365C4A] mb-4 flex items-start gap-2 shadow-sm">
+          <Sparkles className="w-4 h-4 text-[#D89C57] shrink-0 mt-0.5" />
+          <div className="leading-relaxed font-medium">
+            <strong className="font-bold text-[#365C4A]">Lý do ghép tối ưu:</strong> {scoreDetails.reason}
           </div>
         </div>
 
         {/* Detailed Competency Breakdown */}
-        <div className="space-y-2.5 text-xs">
+        <div className="space-y-2.5 text-xs text-[#553F35]">
           
           {/* Priority Subject & Level */}
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-slate-400 flex items-center gap-1">
-              <BookOpen className="w-3.5 h-3.5 text-[#A7B99A]" /> Môn:
+            <span className="text-[#553F35]/70 flex items-center gap-1 font-semibold">
+              <BookOpen className="w-3.5 h-3.5 text-[#365C4A]" /> Môn:
             </span>
-            <span className="font-semibold text-white bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
+            <span className="font-bold text-[#365C4A] bg-[#F8F5EE] px-2.5 py-0.5 rounded-lg border border-[#365C4A]/15">
               {profile.priority_subject}
             </span>
-            <span className={`px-2 py-0.5 rounded-full font-semibold border text-[11px] ${currentLevelInfo.color}`}>
+            <span className={`px-2 py-0.5 rounded-full font-bold border text-[11px] ${currentLevelInfo.color}`}>
               {currentLevelInfo.text}
             </span>
           </div>
@@ -150,9 +146,9 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
           {/* Strong Topics (Có thể kèm cho bạn) */}
           {profile.strong_topics.length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-emerald-400 font-medium">Nắm chắc:</span>
+              <span className="text-emerald-700 font-bold">Nắm chắc:</span>
               {profile.strong_topics.map(t => (
-                <span key={t} className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 text-[11px]">
+                <span key={t} className="px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] font-semibold">
                   ✓ {t}
                 </span>
               ))}
@@ -162,9 +158,9 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
           {/* Weak Topics (Cần bù trừ) */}
           {profile.weak_topics.length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-rose-400 font-medium">Đang yếu:</span>
+              <span className="text-rose-700 font-bold">Đang yếu:</span>
               {profile.weak_topics.map(t => (
-                <span key={t} className="px-2 py-0.5 rounded bg-rose-500/10 text-rose-300 border border-rose-500/30 text-[11px]">
+                <span key={t} className="px-2 py-0.5 rounded-lg bg-rose-50 text-rose-800 border border-rose-200 text-[11px] font-semibold">
                   ! {t}
                 </span>
               ))}
@@ -173,7 +169,7 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
 
           {/* Matched Time Slots */}
           <div className="flex flex-wrap items-center gap-1.5 pt-1">
-            <span className="text-slate-400 flex items-center gap-1">
+            <span className="text-[#553F35]/70 flex items-center gap-1 font-semibold">
               <Clock className="w-3.5 h-3.5 text-[#D89C57]" /> Ca rảnh:
             </span>
             {profile.free_slots.slice(0, 3).map(s => {
@@ -181,10 +177,10 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
               return (
                 <span
                   key={s}
-                  className={`px-2 py-0.5 rounded text-[11px] ${
+                  className={`px-2 py-0.5 rounded-lg text-[11px] font-bold ${
                     isMatched
-                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold'
-                      : 'bg-slate-950 text-slate-400 border border-slate-800'
+                      ? 'bg-[#A7B99A]/30 text-[#365C4A] border border-[#A7B99A]'
+                      : 'bg-[#F8F5EE] text-[#553F35]/70 border border-[#365C4A]/10'
                   }`}
                 >
                   {isMatched && '★ '}{getSlotLabel(s)}
@@ -194,21 +190,21 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
           </div>
 
           {/* Learning Style & Goal */}
-          <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] text-slate-400">
-            <span>Mục tiêu: <strong className="text-slate-200">{profile.learning_goal}</strong></span>
+          <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] text-[#553F35]/80">
+            <span>Mục tiêu: <strong className="text-[#365C4A]">{profile.learning_goal}</strong></span>
             <span>•</span>
-            <span>Phong cách: <strong className="text-slate-200">{profile.learning_style}</strong></span>
+            <span>Phong cách: <strong className="text-[#365C4A]">{profile.learning_style}</strong></span>
           </div>
 
         </div>
       </div>
 
       {/* Card Actions Footer */}
-      <div className="mt-5 pt-4 border-t border-slate-800/80 flex items-center justify-between gap-2">
+      <div className="mt-5 pt-4 border-t border-[#365C4A]/10 flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => onReportOrBlock(candidate)}
-            className="p-2 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-slate-800 transition-all text-xs flex items-center gap-1"
+            className="p-2 rounded-xl text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition-all text-xs flex items-center gap-1"
             title="Báo cáo tài khoản hoặc Chặn ghép đôi"
           >
             <Flag className="w-3.5 h-3.5" />
@@ -218,11 +214,11 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
           {onViewProfile && (
             <button
               onClick={() => onViewProfile(profile)}
-              className="px-2.5 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-all text-xs flex items-center gap-1"
+              className="px-3 py-1.5 rounded-xl text-[#365C4A] hover:bg-[#A7B99A]/20 transition-all text-xs font-bold flex items-center gap-1"
               title="Xem hồ sơ chi tiết bạn học"
             >
-              <ExternalLink className="w-3.5 h-3.5 text-[#A7B99A]" />
-              <span className="hidden sm:inline">Hồ sơ</span>
+              <ExternalLink className="w-3.5 h-3.5 text-[#365C4A]" />
+              <span>Xem hồ sơ</span>
             </button>
           )}
         </div>
@@ -230,15 +226,15 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
         <button
           onClick={() => onSendInvite(candidate)}
           disabled={isSending || hasSent}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-lg ${
+          className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all flex items-center gap-2 shadow-md ${
             hasSent
-              ? 'bg-slate-800 text-slate-400 cursor-not-allowed border border-slate-700'
-              : 'bg-gradient-to-r from-[#365C4A] to-[#2F5242] hover:from-[#2F5242] hover:to-[#254235] text-white shadow-[#365C4A]/30 active:scale-95'
+              ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
+              : 'bg-[#365C4A] hover:bg-[#2B4A3B] text-white shadow-[#365C4A]/20 active:scale-95'
           }`}
         >
           {hasSent ? (
             <>
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
               <span>Đã gửi lời mời</span>
             </>
           ) : (

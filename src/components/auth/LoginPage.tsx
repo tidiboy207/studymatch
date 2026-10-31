@@ -345,7 +345,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                 </label>
                 <a
                   href="#forgot"
-                  onClick={(e) => { e.preventDefault(); alert('Vui lòng dùng tài khoản demo hoặc đăng nhập bằng Google OAuth!'); }}
+                  onClick={(e) => { e.preventDefault(); alert('Vui lòng kiểm tra hộp thư email của bạn để thiết lập lại mật khẩu, hoặc đăng nhập trực tiếp bằng Google!'); }}
                   className="text-[#553F35]/80 hover:text-[#365C4A] hover:underline"
                 >
                   Forgot password?

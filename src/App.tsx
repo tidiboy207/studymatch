@@ -165,16 +165,6 @@ export const App: React.FC = () => {
     await loadData();
   };
 
-  // Role Switcher Handler (Demo switch A/B)
-  const handleSwitchRole = async (role: 'A' | 'B') => {
-    const nextUser = await dataService.switchUserRole(role);
-    setCurrentUser(nextUser);
-    addToast(
-      'info',
-      `Đã chuyển sang vai: ${nextUser.display_name} (${role === 'A' ? 'SV A: Mất gốc / Trì hoãn' : 'SV B: Khá giỏi săn A/A+'})`
-    );
-    await loadData();
-  };
 
   // Profile Save
   const handleSaveProfile = async (updated: Partial<UserProfile>) => {
@@ -331,10 +321,10 @@ export const App: React.FC = () => {
   // Loading state
   if (!currentUser) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#14221B] text-white">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#EBE8DF] via-[#F4F1E8] to-[#F8F5EE] text-[#365C4A]">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-4 border-[#A7B99A] border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm font-semibold text-[#A7B99A]">Đang khởi tạo không gian StudyMatch Matcha Vibe...</p>
+          <div className="w-10 h-10 border-4 border-[#365C4A] border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm font-bold text-[#365C4A]">Đang khởi tạo không gian StudyMatch Matcha Vibe...</p>
         </div>
       </div>
     );
@@ -364,24 +354,27 @@ export const App: React.FC = () => {
   // ROUTE GUARD: BƯỚC 3 — DASHBOARD & CÁC PHÂN HỆ
   // =========================================================================
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-[#365C4A] selection:text-white">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#EBE8DF] via-[#F4F1E8] to-[#F8F5EE] text-[#553F35] selection:bg-[#365C4A] selection:text-white relative overflow-x-hidden font-sans">
       
-      {/* 1. Global Navigation Bar with Matcha Theme */}
+      {/* Background Ambient Decorative Circles */}
+      <div className="fixed top-12 left-10 w-96 h-96 rounded-full bg-[#A7B99A]/15 blur-3xl pointer-events-none" />
+      <div className="fixed bottom-10 right-10 w-96 h-96 rounded-full bg-[#D89C57]/12 blur-3xl pointer-events-none" />
+
+      {/* 1. Global Navigation Bar with Matcha Theme (Không còn Demo Mode) */}
       <Navbar
         currentTab={currentTab}
         onSelectTab={setCurrentTab}
         currentUser={currentUser}
-        onSwitchRole={handleSwitchRole}
         isSupabaseLive={isSupabaseLive}
         onOpenProfile={() => setCurrentTab('profile')}
         onLogout={handleLogout}
       />
 
       {/* 2. Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 relative z-10">
         
         {/* =========================================================================
-            PHÂN HỆ 1: DASHBOARD & TỔNG QUAN
+            PHÂN HỆ 1: DASHBOARD & TỔNG QUAN (MATCHA VIBE STUDY CAFÉ)
            ========================================================================= */}
         {currentTab === 'dashboard' && (
           <div className="space-y-6">
@@ -404,23 +397,23 @@ export const App: React.FC = () => {
               onTopUpDeposit={handleTopUpDeposit}
             />
 
-            {/* Quick Matching Teaser */}
-            <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+            {/* Quick Matching Teaser in Matcha Vibe */}
+            <div className="p-6 sm:p-7 rounded-3xl bg-white border border-[#365C4A]/20 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-5">
               <div>
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-[#A7B99A]" />
-                  <span>Thuật Toán Ghép Đôi Bù Trừ Năng Lực Đang Chờ Bạn</span>
+                <h3 className="text-base font-black text-[#365C4A] flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-[#D89C57]" />
+                  <span>Thuật Toán Ghép Đôi Bù Trừ Năng Lực Sẵn Sàng</span>
                 </h3>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-[#553F35]/80 mt-1 font-medium leading-relaxed">
                   Đã tính toán độ tương thích với {candidates.length} sinh viên cùng môn {currentUser.priority_subject}.
                 </p>
               </div>
               <button
                 onClick={() => setCurrentTab('matching')}
-                className="px-5 py-2.5 rounded-xl bg-[#365C4A] hover:bg-[#2B4A3B] text-white text-xs font-bold transition-all shadow-md shrink-0 flex items-center gap-1.5"
+                className="px-6 py-3 rounded-full bg-[#365C4A] hover:bg-[#2B4A3B] active:scale-98 text-white text-xs font-bold transition-all shadow-xl shadow-[#365C4A]/25 shrink-0 flex items-center gap-2"
               >
                 <span>Xem Top Ứng Viên Phù Hợp</span>
-                <span className="font-mono text-[11px] bg-[#264234] px-1.5 py-0.5 rounded">
+                <span className="font-mono text-xs bg-[#264234] text-[#A7B99A] px-2 py-0.5 rounded-full font-bold">
                   {candidates.slice(0, 3).length}
                 </span>
               </button>
@@ -442,18 +435,18 @@ export const App: React.FC = () => {
             <div>
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <Users className="w-5 h-5 text-[#A7B99A]" />
-                  <h3 className="text-base font-bold text-white tracking-tight">
+                  <Users className="w-5 h-5 text-[#365C4A]" />
+                  <h3 className="text-base font-black text-[#365C4A] tracking-tight">
                     Top Ứng Viên Bù Trừ Kiến Thức Tốt Nhất ({Math.min(candidates.length, 3)})
                   </h3>
                 </div>
-                <span className="text-xs text-slate-400 font-mono">
+                <span className="text-xs text-[#553F35]/70 font-semibold font-mono">
                   Sắp xếp theo Điểm Tương Thích S giảm dần
                 </span>
               </div>
 
               {candidates.length === 0 ? (
-                <div className="p-8 text-center text-xs text-slate-500 rounded-2xl bg-slate-900 border border-slate-800">
+                <div className="p-8 text-center text-xs text-[#553F35]/70 rounded-3xl bg-white border border-[#365C4A]/20 shadow-md">
                   Không tìm thấy ứng viên phù hợp hoặc bạn đã chặn toàn bộ danh sách.
                 </div>
               ) : (
@@ -492,12 +485,12 @@ export const App: React.FC = () => {
             <div>
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <BookOpen className="w-5 h-5 text-[#A7B99A]" />
-                  <h3 className="text-base font-bold text-white tracking-tight">
+                  <BookOpen className="w-5 h-5 text-[#365C4A]" />
+                  <h3 className="text-base font-black text-[#365C4A] tracking-tight">
                     Tài Liệu Học Tập & Ngân Hàng Quiz Chuẩn Hóa ({resources.length})
                   </h3>
                 </div>
-                <span className="text-xs text-emerald-400 font-semibold">
+                <span className="text-xs text-emerald-800 font-bold bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-300">
                   100% Đã kiểm duyệt bản quyền
                 </span>
               </div>
@@ -534,17 +527,17 @@ export const App: React.FC = () => {
                 onSessionFinished={loadData}
               />
             ) : (
-              <div className="p-12 rounded-3xl bg-slate-900 border border-slate-800 text-center max-w-lg mx-auto space-y-4">
-                <div className="w-16 h-16 rounded-2xl bg-[#365C4A]/30 border border-[#365C4A]/60 flex items-center justify-center mx-auto text-[#A7B99A]">
+              <div className="p-10 sm:p-12 rounded-3xl bg-white border border-[#365C4A]/20 text-center max-w-lg mx-auto space-y-4 shadow-xl">
+                <div className="w-16 h-16 rounded-2xl bg-[#365C4A]/10 border border-[#365C4A]/25 flex items-center justify-center mx-auto text-[#365C4A]">
                   <Video className="w-8 h-8" />
                 </div>
-                <h3 className="text-lg font-bold text-white">Chưa Có Phiên Học Nào Sẵn Sàng</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <h3 className="text-lg font-black text-[#365C4A]">Chưa Có Phiên Học Nào Sẵn Sàng</h3>
+                <p className="text-xs text-[#553F35]/80 leading-relaxed font-medium">
                   Hãy vào mục "Tìm bạn học" để gửi lời mời ghép đôi hoặc chấp nhận lời mời từ bạn học ở Bảng tin để tự động mở phòng học.
                 </p>
                 <button
                   onClick={() => setCurrentTab('matching')}
-                  className="px-5 py-2.5 rounded-xl bg-[#365C4A] hover:bg-[#2B4A3B] text-white text-xs font-bold transition-all shadow-md"
+                  className="px-6 py-2.5 rounded-full bg-[#365C4A] hover:bg-[#2B4A3B] text-white text-xs font-bold transition-all shadow-md shadow-[#365C4A]/20"
                 >
                   Tìm bạn học ngay
                 </button>
@@ -592,11 +585,11 @@ export const App: React.FC = () => {
 
       </main>
 
-      {/* 3. Global Footer */}
-      <footer className="border-t border-slate-800/80 bg-slate-950 py-6 text-center text-xs text-slate-500 space-y-1">
-        <p>StudyMatch © 2026 — Nền tảng tự động ghép đôi bạn học bù trừ năng lực & phòng học cam kết kỷ luật.</p>
-        <p className="text-[11px] text-slate-600">
-          Phong cách Matcha Vibe • Chế độ {isSupabaseLive ? 'Live Supabase (PostgreSQL)' : 'Demo / Mock 0-Config (LocalStorage)'} • PWA Offline Ready
+      {/* 3. Global Footer (Matcha Vibe Production) */}
+      <footer className="border-t border-[#365C4A]/15 bg-[#F8F5EE] py-6 text-center text-xs text-[#553F35]/80 space-y-1">
+        <p className="font-bold text-[#365C4A]">StudyMatch © 2026 — Nền tảng học tập cộng tác & phòng học Pomodoro cam kết kỷ luật cho sinh viên Việt Nam.</p>
+        <p className="text-[11px] text-[#553F35]/60">
+          Phong cách Study Café & Matcha Vibe • Bảo mật định danh học thuật • Đồng hành qua môn & săn học bổng
         </p>
       </footer>
 

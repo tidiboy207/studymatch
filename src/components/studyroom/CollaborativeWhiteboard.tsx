@@ -35,12 +35,12 @@ export const CollaborativeWhiteboard: React.FC<CollaborativeWhiteboardProps> = (
   const [isEraser, setIsEraser] = useState(false);
 
   const colors = [
-    { label: 'Trắng', hex: '#ffffff' },
-    { label: 'Indigo', hex: '#818cf8' },
-    { label: 'Emerald', hex: '#34d399' },
-    { label: 'Amber', hex: '#fbbf24' },
-    { label: 'Rose', hex: '#f87171' },
-    { label: 'Cyan', hex: '#38bdf8' }
+    { label: 'Trắng phấn', hex: '#ffffff' },
+    { label: 'Matcha', hex: '#A7B99A' },
+    { label: 'Vàng phấn', hex: '#FDE047' },
+    { label: 'Cam phấn', hex: '#FB923C' },
+    { label: 'Hồng phấn', hex: '#F87171' },
+    { label: 'Lam phấn', hex: '#38BDF8' }
   ];
 
   // Khởi tạo Canvas và Resize listener
@@ -208,49 +208,49 @@ export const CollaborativeWhiteboard: React.FC<CollaborativeWhiteboardProps> = (
   };
 
   return (
-    <div className="flex flex-col h-full rounded-2xl bg-slate-900 border border-slate-800 shadow-xl overflow-hidden">
+    <div className="flex flex-col h-full rounded-3xl bg-white border border-[#365C4A]/20 shadow-xl overflow-hidden">
       
       {/* Whiteboard Toolbar */}
-      <div className="p-3 bg-slate-950 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs">
+      <div className="p-3.5 bg-[#F8F5EE] border-b border-[#365C4A]/15 flex flex-wrap items-center justify-between gap-2 text-xs">
         
         {/* Tools: Pen vs Eraser */}
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => setIsEraser(false)}
-            className={`p-2 rounded-xl transition-all flex items-center gap-1.5 ${
+            className={`p-2 rounded-xl transition-all flex items-center gap-1.5 font-bold ${
               !isEraser
-                ? 'bg-indigo-600 text-white shadow'
-                : 'bg-slate-900 text-slate-400 hover:text-white'
+                ? 'bg-[#365C4A] text-white shadow-sm'
+                : 'bg-white text-[#553F35] hover:bg-[#EBE8DF] border border-[#365C4A]/15'
             }`}
             title="Bút viết công thức Toán"
           >
             <PenTool className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Bút viết</span>
+            <span className="hidden sm:inline">Bút phấn</span>
           </button>
 
           <button
             onClick={() => setIsEraser(true)}
-            className={`p-2 rounded-xl transition-all flex items-center gap-1.5 ${
+            className={`p-2 rounded-xl transition-all flex items-center gap-1.5 font-bold ${
               isEraser
-                ? 'bg-amber-600 text-white shadow'
-                : 'bg-slate-900 text-slate-400 hover:text-white'
+                ? 'bg-[#D89C57] text-white shadow-sm'
+                : 'bg-white text-[#553F35] hover:bg-[#EBE8DF] border border-[#365C4A]/15'
             }`}
-            title="Tẩy nét vẽ"
+            title="Khăn lau bảng"
           >
             <Eraser className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Tẩy</span>
+            <span className="hidden sm:inline">Lau bảng</span>
           </button>
         </div>
 
         {/* Color Palette */}
         {!isEraser && (
-          <div className="flex items-center gap-1.5 bg-slate-900 p-1 rounded-xl border border-slate-800">
+          <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-[#365C4A]/15 shadow-sm">
             {colors.map((c) => (
               <button
                 key={c.hex}
                 onClick={() => setColor(c.hex)}
                 className={`w-5 h-5 rounded-full transition-transform ${
-                  color === c.hex ? 'scale-125 ring-2 ring-indigo-400' : 'hover:scale-110 opacity-80'
+                  color === c.hex ? 'scale-125 ring-2 ring-[#365C4A]' : 'hover:scale-110 opacity-80'
                 }`}
                 style={{ backgroundColor: c.hex }}
                 title={c.label}
@@ -260,13 +260,13 @@ export const CollaborativeWhiteboard: React.FC<CollaborativeWhiteboardProps> = (
         )}
 
         {/* Stroke Size Selector */}
-        <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800 text-[11px]">
+        <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-[#365C4A]/15 text-[11px] shadow-sm">
           {[2, 4, 8].map((s) => (
             <button
               key={s}
               onClick={() => setSize(s)}
-              className={`px-2 py-0.5 rounded transition-all font-semibold ${
-                size === s ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'
+              className={`px-2 py-0.5 rounded-lg transition-all font-bold ${
+                size === s ? 'bg-[#365C4A] text-white' : 'text-[#553F35]/70 hover:text-[#365C4A]'
               }`}
             >
               {s === 2 ? 'Mảnh' : s === 4 ? 'Vừa' : 'Đậm'}
@@ -278,7 +278,7 @@ export const CollaborativeWhiteboard: React.FC<CollaborativeWhiteboardProps> = (
         <div className="flex items-center gap-1.5">
           <button
             onClick={handleClearBoard}
-            className="p-1.5 rounded-lg bg-slate-900 hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 border border-slate-800 transition-all"
+            className="p-2 rounded-xl bg-white hover:bg-rose-50 text-gray-400 hover:text-rose-600 border border-[#365C4A]/15 transition-all shadow-sm"
             title="Xóa toàn bộ bảng trắng"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -286,7 +286,7 @@ export const CollaborativeWhiteboard: React.FC<CollaborativeWhiteboardProps> = (
 
           <button
             onClick={handleDownload}
-            className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 transition-all"
+            className="p-2 rounded-xl bg-white hover:bg-[#F8F5EE] text-[#365C4A] border border-[#365C4A]/15 transition-all shadow-sm"
             title="Tải ảnh lời giải bài tập"
           >
             <Download className="w-3.5 h-3.5" />
@@ -295,10 +295,10 @@ export const CollaborativeWhiteboard: React.FC<CollaborativeWhiteboardProps> = (
 
       </div>
 
-      {/* HTML5 Canvas Area */}
-      <div className="relative flex-1 bg-[#090d16] min-h-[380px] cursor-crosshair">
+      {/* HTML5 Canvas Area (Chalkboard) */}
+      <div className="relative flex-1 bg-[#1E372C] min-h-[380px] cursor-crosshair">
         {/* Math Grid background subtle pattern */}
-        <div className="absolute inset-0 opacity-15 pointer-events-none bg-[radial-gradient(#4f46e5_1px,transparent_1px)] [background-size:16px_16px]" />
+        <div className="absolute inset-0 opacity-10 pointer-events-none bg-[radial-gradient(#A7B99A_1px,transparent_1px)] [background-size:16px_16px]" />
         
         <canvas
           ref={canvasRef}
@@ -313,9 +313,9 @@ export const CollaborativeWhiteboard: React.FC<CollaborativeWhiteboardProps> = (
         />
 
         {/* Sync hint pill */}
-        <div className="absolute bottom-2 right-2 px-2.5 py-1 rounded-lg bg-slate-950/80 backdrop-blur-md text-[10px] text-slate-400 border border-slate-800 flex items-center gap-1.5 pointer-events-none">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          <span>Bảng trắng đồng bộ 2 chiều (P2P Realtime)</span>
+        <div className="absolute bottom-2 right-2 px-3 py-1 rounded-full bg-black/50 backdrop-blur-md text-[10px] text-[#A7B99A] border border-white/10 flex items-center gap-1.5 pointer-events-none font-bold">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#A7B99A] animate-pulse" />
+          <span>Bảng viết đồng bộ 2 chiều (P2P Realtime)</span>
         </div>
       </div>
 

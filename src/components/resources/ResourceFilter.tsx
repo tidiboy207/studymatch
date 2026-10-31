@@ -25,18 +25,18 @@ export const ResourceFilter: React.FC<ResourceFilterProps> = ({
   const types = ['ALL', 'Ghi chú', 'Bài tập', 'Đề ôn tập'];
 
   return (
-    <div className="p-4 sm:p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl space-y-4">
-      <div className="flex items-center gap-2 text-xs font-bold text-slate-300 uppercase tracking-wider">
-        <Filter className="w-4 h-4 text-indigo-400" />
-        <span>Bộ lọc 3 cấp độ: Môn học → Chủ đề → Loại tài liệu</span>
+    <div className="p-5 sm:p-6 rounded-3xl bg-white border border-[#365C4A]/20 shadow-xl space-y-4">
+      <div className="flex items-center gap-2 text-xs font-black text-[#365C4A] uppercase tracking-wider pb-3 border-b border-[#365C4A]/10">
+        <Filter className="w-4 h-4 text-[#D89C57]" />
+        <span>Bộ Lọc 3 Cấp Độ: Môn Học → Chương → Loại Tài Liệu</span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         
         {/* Cấp 1: Môn học */}
         <div>
-          <label className="block text-[11px] font-semibold text-slate-400 mb-1 flex items-center gap-1">
-            <BookOpen className="w-3.5 h-3.5 text-indigo-400" />
+          <label className="block text-[11px] font-bold text-[#553F35] mb-1.5 flex items-center gap-1">
+            <BookOpen className="w-3.5 h-3.5 text-[#365C4A]" />
             1. Môn học
           </label>
           <select
@@ -45,9 +45,9 @@ export const ResourceFilter: React.FC<ResourceFilterProps> = ({
               onSelectSubject(e.target.value);
               onSelectTopic('ALL');
             }}
-            className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:outline-none focus:border-indigo-500"
+            className="w-full px-3.5 py-2.5 rounded-2xl bg-[#F8F5EE] border border-[#365C4A]/20 text-[#553F35] text-xs font-bold focus:outline-none focus:border-[#365C4A]"
           >
-            <option value="ALL">Tất cả 3 môn đại cương</option>
+            <option value="ALL">Tất cả môn học</option>
             {SUBJECTS_CATALOG.map(s => (
               <option key={s.code} value={s.fullName}>{s.fullName}</option>
             ))}
@@ -56,15 +56,15 @@ export const ResourceFilter: React.FC<ResourceFilterProps> = ({
 
         {/* Cấp 2: Chủ đề / Chương */}
         <div>
-          <label className="block text-[11px] font-semibold text-slate-400 mb-1 flex items-center gap-1">
-            <Layers className="w-3.5 h-3.5 text-emerald-400" />
+          <label className="block text-[11px] font-bold text-[#553F35] mb-1.5 flex items-center gap-1">
+            <Layers className="w-3.5 h-3.5 text-[#365C4A]" />
             2. Chương / Chủ đề
           </label>
           <select
             value={selectedTopic}
             onChange={(e) => onSelectTopic(e.target.value)}
             disabled={selectedSubject === 'ALL'}
-            className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:outline-none focus:border-indigo-500 disabled:opacity-50"
+            className="w-full px-3.5 py-2.5 rounded-2xl bg-[#F8F5EE] border border-[#365C4A]/20 text-[#553F35] text-xs font-bold focus:outline-none focus:border-[#365C4A] disabled:opacity-50"
           >
             <option value="ALL">Tất cả các chương</option>
             {availableTopics.map(t => (
@@ -75,9 +75,9 @@ export const ResourceFilter: React.FC<ResourceFilterProps> = ({
 
         {/* Cấp 3: Loại tài liệu */}
         <div>
-          <label className="block text-[11px] font-semibold text-slate-400 mb-1 flex items-center gap-1">
-            <FileText className="w-3.5 h-3.5 text-amber-400" />
-            3. Loại tài liệu
+          <label className="block text-[11px] font-bold text-[#553F35] mb-1.5 flex items-center gap-1">
+            <FileText className="w-3.5 h-3.5 text-[#D89C57]" />
+            3. Định dạng tài liệu
           </label>
           <div className="flex gap-1.5">
             {types.map(t => (
@@ -85,10 +85,10 @@ export const ResourceFilter: React.FC<ResourceFilterProps> = ({
                 key={t}
                 type="button"
                 onClick={() => onSelectType(t)}
-                className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all ${
+                className={`flex-1 py-2.5 rounded-2xl text-xs font-bold transition-all ${
                   selectedType === t
-                    ? 'bg-indigo-600 text-white shadow'
-                    : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
+                    ? 'bg-[#365C4A] text-white shadow-md shadow-[#365C4A]/20'
+                    : 'bg-[#F8F5EE] text-[#553F35]/70 hover:text-[#365C4A] border border-[#365C4A]/15'
                 }`}
               >
                 {t === 'ALL' ? 'Tất cả' : t}

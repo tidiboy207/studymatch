@@ -10,14 +10,11 @@ import { PostSessionModal } from './PostSessionModal';
 import {
   CheckCircle2,
   Video,
-  FileText,
-  AlertTriangle,
   Award,
-  Sparkles,
   Layers,
-  ChevronRight,
   BookOpen,
-  ArrowLeft
+  ArrowLeft,
+  AlertTriangle
 } from 'lucide-react';
 import { dataService } from '../../services/dataService';
 
@@ -62,27 +59,27 @@ export const StudyRoomScreen: React.FC<StudyRoomScreenProps> = ({
     <div className="space-y-4">
       
       {/* Top Session Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl">
+      <div className="flex flex-wrap items-center justify-between gap-3 p-4 sm:p-5 rounded-3xl bg-white border border-[#365C4A]/20 shadow-xl">
         <div className="flex items-center gap-3">
           <button
             onClick={onBackToDashboard}
-            className="p-2 rounded-xl bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 transition-all"
+            className="p-2 rounded-2xl bg-[#F8F5EE] hover:bg-[#EBE8DF] text-[#365C4A] border border-[#365C4A]/15 transition-all"
             title="Quay lại Bảng tin"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div>
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-              <h2 className="text-sm sm:text-base font-extrabold text-white">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse" />
+              <h2 className="text-sm sm:text-base font-black text-[#365C4A]">
                 Phòng Học Cam Kết Kỷ Luật
               </h2>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-semibold font-mono">
+              <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-[#A7B99A]/20 text-[#365C4A] border border-[#A7B99A]/40 font-bold font-mono">
                 {session.duration_minutes} Phút
               </span>
             </div>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Môn: <strong className="text-slate-200">{session.subject}</strong> • Chủ đề: <strong className="text-emerald-400">{session.topic}</strong>
+            <p className="text-xs text-[#553F35]/80 mt-0.5 font-medium">
+              Môn: <strong className="text-[#365C4A]">{session.subject}</strong> • Chủ đề: <strong className="text-emerald-700">{session.topic}</strong>
             </p>
           </div>
         </div>
@@ -92,34 +89,34 @@ export const StudyRoomScreen: React.FC<StudyRoomScreenProps> = ({
           {!isConfirmed ? (
             <button
               onClick={onConfirmAttendance}
-              className="px-3.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-bold transition-all flex items-center gap-1.5 animate-bounce"
+              className="px-3.5 py-2 rounded-full bg-[#D89C57]/20 hover:bg-[#D89C57]/30 text-[#D89C57] border border-[#D89C57] text-xs font-bold transition-all flex items-center gap-1.5 animate-bounce"
             >
               <CheckCircle2 className="w-3.5 h-3.5" />
               <span>Xác nhận có mặt</span>
             </button>
           ) : (
-            <span className="px-3 py-1.5 rounded-xl bg-emerald-950/40 border border-emerald-800 text-emerald-300 text-xs font-semibold flex items-center gap-1">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="px-3.5 py-2 rounded-full bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-bold flex items-center gap-1">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
               Đã xác nhận có mặt
             </span>
           )}
 
           <button
             onClick={() => setIsPostModalOpen(true)}
-            className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-extrabold transition-all shadow-lg shadow-emerald-600/25 flex items-center gap-1.5"
+            className="px-5 py-2 rounded-full bg-[#365C4A] hover:bg-[#2B4A3B] text-white text-xs font-black transition-all shadow-md shadow-[#365C4A]/20 flex items-center gap-1.5 active:scale-98"
           >
-            <Award className="w-4 h-4" />
+            <Award className="w-4 h-4 text-[#A7B99A]" />
             <span>Hoàn thành buổi học</span>
           </button>
         </div>
       </div>
 
       {/* Mobile Tab Selector (Chỉ hiện trên màn hình nhỏ) */}
-      <div className="flex lg:hidden rounded-xl bg-slate-900 p-1 border border-slate-800 text-xs">
+      <div className="flex lg:hidden rounded-2xl bg-[#F8F5EE] p-1 border border-[#365C4A]/15 text-xs">
         <button
           onClick={() => setMobileTab('video')}
-          className={`flex-1 py-2 rounded-lg font-bold transition-all flex items-center justify-center gap-1.5 ${
-            mobileTab === 'video' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400'
+          className={`flex-1 py-2 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 ${
+            mobileTab === 'video' ? 'bg-[#365C4A] text-white shadow-sm' : 'text-[#553F35]/70'
           }`}
         >
           <Video className="w-3.5 h-3.5" />
@@ -127,8 +124,8 @@ export const StudyRoomScreen: React.FC<StudyRoomScreenProps> = ({
         </button>
         <button
           onClick={() => setMobileTab('board')}
-          className={`flex-1 py-2 rounded-lg font-bold transition-all flex items-center justify-center gap-1.5 ${
-            mobileTab === 'board' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400'
+          className={`flex-1 py-2 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 ${
+            mobileTab === 'board' ? 'bg-[#365C4A] text-white shadow-sm' : 'text-[#553F35]/70'
           }`}
         >
           <Layers className="w-3.5 h-3.5" />
@@ -136,8 +133,8 @@ export const StudyRoomScreen: React.FC<StudyRoomScreenProps> = ({
         </button>
         <button
           onClick={() => setMobileTab('chat')}
-          className={`flex-1 py-2 rounded-lg font-bold transition-all flex items-center justify-center gap-1.5 ${
-            mobileTab === 'chat' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400'
+          className={`flex-1 py-2 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 ${
+            mobileTab === 'chat' ? 'bg-[#365C4A] text-white shadow-sm' : 'text-[#553F35]/70'
           }`}
         >
           <AlertTriangle className="w-3.5 h-3.5" />
@@ -167,23 +164,23 @@ export const StudyRoomScreen: React.FC<StudyRoomScreenProps> = ({
           <ChecklistGoals session={session} onGoalToggle={onGoalToggle} />
 
           {/* Center Tabs: Whiteboard vs Attached Resource */}
-          <div className="flex rounded-xl bg-slate-900 p-1 border border-slate-800 text-xs">
+          <div className="flex rounded-2xl bg-[#F8F5EE] p-1 border border-[#365C4A]/15 text-xs">
             <button
               onClick={() => setCenterTab('whiteboard')}
-              className={`flex-1 py-1.5 rounded-lg font-bold transition-all ${
+              className={`flex-1 py-2 rounded-xl font-bold transition-all ${
                 centerTab === 'whiteboard'
-                  ? 'bg-indigo-600 text-white shadow'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-[#365C4A] text-white shadow-sm'
+                  : 'text-[#553F35]/70 hover:text-[#365C4A]'
               }`}
             >
               Bảng Trắng Giải Bài Đồng Bộ (Canvas P2P)
             </button>
             <button
               onClick={() => setCenterTab('resource')}
-              className={`flex-1 py-1.5 rounded-lg font-bold transition-all flex items-center justify-center gap-1 ${
+              className={`flex-1 py-2 rounded-xl font-bold transition-all flex items-center justify-center gap-1 ${
                 centerTab === 'resource'
-                  ? 'bg-indigo-600 text-white shadow'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-[#365C4A] text-white shadow-sm'
+                  : 'text-[#553F35]/70 hover:text-[#365C4A]'
               }`}
             >
               <BookOpen className="w-3.5 h-3.5" />
@@ -195,24 +192,24 @@ export const StudyRoomScreen: React.FC<StudyRoomScreenProps> = ({
             <CollaborativeWhiteboard sessionId={session.id} />
           ) : (
             /* Attached Resource Direct Viewer in room */
-            <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3 min-h-[380px] overflow-y-auto">
+            <div className="p-6 rounded-3xl bg-white border border-[#365C4A]/20 space-y-3 min-h-[380px] overflow-y-auto shadow-md">
               {attachedResource ? (
                 <>
-                  <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-                    <h3 className="font-bold text-sm text-white">{attachedResource.title}</h3>
-                    <span className="text-[10px] text-emerald-400 font-semibold px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
+                  <div className="flex items-center justify-between pb-3 border-b border-[#365C4A]/10">
+                    <h3 className="font-black text-sm text-[#365C4A]">{attachedResource.title}</h3>
+                    <span className="text-[10px] text-[#365C4A] font-bold px-2.5 py-0.5 rounded-full bg-[#A7B99A]/20 border border-[#A7B99A]/40">
                       {attachedResource.topic}
                     </span>
                   </div>
-                  <div className="p-3 rounded-xl bg-slate-950 font-mono text-xs text-emerald-300 border border-slate-800">
+                  <div className="p-3.5 rounded-2xl bg-[#F8F5EE] font-mono text-xs text-[#365C4A] font-bold border border-[#365C4A]/15">
                     {attachedResource.formula_summary}
                   </div>
-                  <div className="text-xs text-slate-300 whitespace-pre-wrap leading-relaxed font-sans">
+                  <div className="text-xs text-[#553F35] whitespace-pre-wrap leading-relaxed font-sans">
                     {attachedResource.content_markdown}
                   </div>
                 </>
               ) : (
-                <div className="p-8 text-center text-xs text-slate-500">
+                <div className="p-8 text-center text-xs text-[#553F35]/60">
                   Chưa gắn tài liệu nào từ Thư viện môn học. Bạn có thể sang tab "Thư viện" để gắn tài liệu vào phòng!
                 </div>
               )}
