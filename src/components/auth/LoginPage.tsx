@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Users,
   Sparkles,
@@ -11,9 +11,18 @@ import {
   EyeOff,
   Check,
   ArrowRight,
-  X
+  X,
+  CheckCircle2,
+  MailCheck,
+  ShieldCheck,
+  KeyRound,
+  ExternalLink,
+  RefreshCw,
+  Copy,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
-import { UserProfile } from '../../types';
+import { UserProfile, SimulatedEmailMessage } from '../../types';
 import { dataService } from '../../services/dataService';
 
 interface LoginPageProps {
@@ -32,12 +41,53 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
   const [registerName, setRegisterName] = useState('');
   const [registerEmail, setRegisterEmail] = useState('');
 
+  // Email Verification States (OTP & Magic Link)
+  const [isOtpModal, setIsOtpModal] = useState(false);
+  const [otpEmail, setOtpEmail] = useState('');
+  const [otpDigits, setOtpDigits] = useState<string[]>(['', '', '', '', '', '']);
+  const [resendCooldown, setResendCooldown] = useState(60);
+  const [simulatedEmail, setSimulatedEmail] = useState<SimulatedEmailMessage | null>(null);
+  const [showSimulatedInbox, setShowSimulatedInbox] = useState(true);
+
   const showNotification = (msg: string) => {
     setToast(msg);
     setTimeout(() => {
       setToast(null);
     }, 3800);
   };
+
+  // Check Magic Link verification from URL query (?verify_token=...&email=...)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const verifyToken = urlParams.get('verify_token');
+    const verifyEmailParam = urlParams.get('email');
+    if (verifyToken) {
+      setIsLoading(true);
+      showNotification('Đang xác thực liên kết Magic Link từ email... 🍵');
+      dataService.verifyMagicLink(verifyToken, verifyEmailParam || undefined).then((res) => {
+        if (res.success && res.user) {
+          showNotification(`Xác thực thành công! Chào mừng ${res.user.display_name} 🍵`);
+          window.history.replaceState({}, document.title, window.location.pathname);
+          setTimeout(() => onLoginSuccess(res.user!), 600);
+        } else {
+          showNotification(res.error || 'Liên kết xác thực không hợp lệ hoặc đã quá hạn!');
+        }
+      }).finally(() => {
+        setIsLoading(false);
+      });
+    }
+  }, []);
+
+  // Timer countdown for resending verification code
+  useEffect(() => {
+    let timer: any;
+    if (isOtpModal && resendCooldown > 0) {
+      timer = setInterval(() => {
+        setResendCooldown((prev) => Math.max(0, prev - 1));
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [isOtpModal, resendCooldown]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,6 +131,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     }
   };
 
+  // Kích hoạt quy trình xác thực email khi người dùng bấm tạo tài khoản
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const targetEmail = registerEmail.trim() || email.trim();
@@ -90,19 +141,140 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     }
     setIsLoading(true);
     try {
-      const result = await dataService.registerWithEmail(
+      const result = await dataService.initiateEmailRegistration(
         targetEmail,
-        registerName.trim() || targetEmail.split('@')[0],
-        '',
-        ''
+        registerName.trim() || targetEmail.split('@')[0]
       );
+
+      if (!result.success) {
+        showNotification(result.error || 'Không thể gửi mã xác thực!');
+        return;
+      }
+
+      if (!result.isNew) {
+        // Tài khoản đã có sẵn và đã xác thực -> Chuyển sang đăng nhập
+        showNotification('Email này đã được kích hoạt trước đó! Đang đăng nhập... 🍵');
+        const loginRes = await dataService.loginWithCredentials(targetEmail);
+        if (loginRes.user) onLoginSuccess(loginRes.user);
+        return;
+      }
+
+      // Đóng modal đăng ký và mở modal nhập mã OTP
       setIsRegisterModal(false);
-      showNotification(`Khởi tạo tài khoản thành công cho ${result.user.display_name}! 🍵`);
-      setTimeout(() => {
-        onLoginSuccess(result.user);
-      }, 500);
+      setOtpEmail(targetEmail);
+      setOtpDigits(['', '', '', '', '', '']);
+      setResendCooldown(60);
+      setSimulatedEmail(result.simulatedEmail || null);
+      setShowSimulatedInbox(true);
+      setIsOtpModal(true);
+      showNotification(`Mã xác thực 6 số đã được gửi tới ${targetEmail}! ✉️`);
     } catch (err: any) {
       showNotification('Đăng ký không thành công, vui lòng thử lại!');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // OTP Digits Handling (auto-focus next input, paste support)
+  const handleDigitChange = (index: number, val: string) => {
+    const digit = val.replace(/\D/g, '').slice(-1);
+    const newDigits = [...otpDigits];
+    newDigits[index] = digit;
+    setOtpDigits(newDigits);
+
+    // Auto focus next
+    if (digit && index < 5) {
+      const nextInput = document.getElementById(`otp-digit-${index + 1}`);
+      nextInput?.focus();
+    }
+
+    // Auto submit if 6 digits complete
+    if (digit && index === 5 && newDigits.every(d => d !== '')) {
+      handleVerifyOtpSubmit(newDigits.join(''));
+    }
+  };
+
+  const handleDigitKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !otpDigits[index] && index > 0) {
+      const prevInput = document.getElementById(`otp-digit-${index - 1}`);
+      prevInput?.focus();
+    }
+  };
+
+  const handleDigitPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    if (pasted.length > 0) {
+      const newDigits = [...otpDigits];
+      for (let i = 0; i < 6; i++) {
+        newDigits[i] = pasted[i] || '';
+      }
+      setOtpDigits(newDigits);
+      if (pasted.length === 6) {
+        handleVerifyOtpSubmit(pasted);
+      }
+    }
+  };
+
+  // Xác thực OTP
+  const handleVerifyOtpSubmit = async (codeToVerify?: string) => {
+    const code = codeToVerify || otpDigits.join('');
+    if (code.length < 6) {
+      showNotification('Vui lòng nhập đủ 6 chữ số mã OTP!');
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const result = await dataService.verifyOtp(otpEmail, code);
+      if (result.success && result.user) {
+        setIsOtpModal(false);
+        showNotification(`Xác thực email thành công! Chào mừng ${result.user.display_name} 🍵`);
+        setTimeout(() => {
+          onLoginSuccess(result.user!);
+        }, 500);
+      } else {
+        showNotification(result.error || 'Mã xác thực không hợp lệ!');
+      }
+    } catch (err: any) {
+      showNotification('Lỗi xác thực, vui lòng thử lại!');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Gửi lại mã OTP
+  const handleResendOtp = async () => {
+    if (resendCooldown > 0) return;
+    setIsLoading(true);
+    try {
+      const res = await dataService.resendOtp(otpEmail);
+      if (res.success) {
+        setResendCooldown(60);
+        setSimulatedEmail(res.simulatedEmail || null);
+        showNotification(`Đã gửi lại mã OTP mới đến ${otpEmail}! 📬`);
+      } else {
+        showNotification(res.error || 'Không thể gửi lại mã!');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Xác thực qua Magic Link 1-click
+  const handleMagicLinkClick = async (token: string) => {
+    setIsLoading(true);
+    showNotification('Đang kích hoạt bằng liên kết Magic Link... 🍵');
+    try {
+      const res = await dataService.verifyMagicLink(token, otpEmail);
+      if (res.success && res.user) {
+        setIsOtpModal(false);
+        showNotification(`Kích hoạt tài khoản thành công! 🍵`);
+        setTimeout(() => {
+          onLoginSuccess(res.user!);
+        }, 500);
+      } else {
+        showNotification(res.error || 'Liên kết không hợp lệ!');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -856,11 +1028,205 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
               <button
                 type="submit"
-                className="matcha-cta-button w-full py-3.5 rounded-2xl text-white font-display font-bold text-xs tracking-widest uppercase cursor-pointer"
+                className="matcha-cta-button w-full py-3.5 rounded-2xl text-white font-display font-bold text-xs tracking-widest uppercase cursor-pointer flex items-center justify-center gap-2"
               >
-                Khởi tạo hồ sơ & Ghép đôi
+                <span>Gửi mã xác thực về Email</span>
+                <ArrowRight className="w-4 h-4" />
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          EMAIL VERIFICATION OTP & MAGIC LINK MODAL
+         ========================================================================= */}
+      {isOtpModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-[#FAF7F2] border border-white/90 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl space-y-5 relative max-h-[92vh] overflow-y-auto">
+            
+            {/* Header */}
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-[#365C4A]/10 border border-[#365C4A]/20 flex items-center justify-center text-[#365C4A]">
+                  <MailCheck className="w-6 h-6" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#365C4A]/10 text-[#365C4A]">
+                    Bảo mật danh tính sinh viên
+                  </span>
+                  <h3 className="font-display font-bold text-xl text-[#264235] mt-1">
+                    Xác Thực Email Học Tập
+                  </h3>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsOtpModal(false)}
+                className="p-1 rounded-full text-[#4E6157] hover:bg-[#E2DFD5] transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Instruction description */}
+            <div className="space-y-1">
+              <p className="font-body text-xs text-[#5E7368] leading-relaxed">
+                Mã xác thực gồm <strong>6 chữ số</strong> đã được gửi tới địa chỉ email:
+              </p>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-[#365C4A]/20 text-xs font-bold text-[#365C4A]">
+                <Mail className="w-3.5 h-3.5" />
+                <span>{otpEmail}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsOtpModal(false);
+                    setIsRegisterModal(true);
+                  }}
+                  className="text-[11px] font-medium text-[#D89C57] hover:underline ml-1"
+                >
+                  (Đổi)
+                </button>
+              </div>
+            </div>
+
+            {/* 6-Digit OTP Box Grid */}
+            <div className="space-y-2">
+              <label className="block text-[11px] font-black text-[#365C4A] uppercase tracking-wider">
+                Nhập mã OTP 6 số:
+              </label>
+              <div className="grid grid-cols-6 gap-2 sm:gap-3">
+                {otpDigits.map((digit, idx) => (
+                  <input
+                    key={idx}
+                    id={`otp-digit-${idx}`}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={digit}
+                    onChange={(e) => handleDigitChange(idx, e.target.value)}
+                    onKeyDown={(e) => handleDigitKeyDown(idx, e)}
+                    onPaste={idx === 0 ? handleDigitPaste : undefined}
+                    className="h-14 rounded-2xl bg-[#EFECE3] border border-[#365C4A]/25 text-center text-2xl font-black font-mono text-[#365C4A] focus:outline-none focus:ring-2 focus:ring-[#365C4A] shadow-inner transition-all"
+                  />
+                ))}
+              </div>
+              <p className="text-[10px] text-[#553F35]/65 font-medium">
+                💡 Mẹo: Bạn có thể copy mã 6 số và dán (Ctrl+V) thẳng vào ô đầu tiên.
+              </p>
+            </div>
+
+            {/* Verification Action Button */}
+            <button
+              type="button"
+              onClick={() => handleVerifyOtpSubmit()}
+              disabled={isLoading || otpDigits.join('').length < 6}
+              className={`matcha-cta-button w-full py-3.5 rounded-2xl text-white font-display font-bold text-xs tracking-widest uppercase cursor-pointer flex items-center justify-center gap-2 shadow-lg ${
+                otpDigits.join('').length < 6 ? 'opacity-60 cursor-not-allowed' : ''
+              }`}
+            >
+              {isLoading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Đang kiểm tra mã...</span>
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Xác Thực & Kích Hoạt Tài Khoản</span>
+                </>
+              )}
+            </button>
+
+            {/* Resend Cooldown and Action */}
+            <div className="flex items-center justify-between text-xs pt-1 border-t border-[#365C4A]/10 font-body">
+              <span className="text-[#5E7368]">Chưa nhận được mã OTP?</span>
+              {resendCooldown > 0 ? (
+                <span className="font-semibold text-[#553F35]/70 flex items-center gap-1.5 font-mono">
+                  <RefreshCw className="w-3 h-3 animate-spin text-[#D89C57]" />
+                  Gửi lại sau {resendCooldown}s
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleResendOtp}
+                  className="font-bold text-[#365C4A] hover:underline flex items-center gap-1 cursor-pointer"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>Gửi lại mã OTP</span>
+                </button>
+              )}
+            </div>
+
+            {/* Simulated Mailbox Preview (Hộp thư đến giả lập để trải nghiệm thực tế ngay lập tức) */}
+            {simulatedEmail && (
+              <div className="rounded-2xl border border-emerald-300 bg-emerald-50/70 p-4 space-y-3 text-xs text-[#264235]">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 font-bold text-emerald-900">
+                    <span className="text-base">📬</span>
+                    <span>Hộp thư sinh viên (Bản xem trước thư vừa gửi tới)</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowSimulatedInbox(!showSimulatedInbox)}
+                    className="text-emerald-700 hover:text-emerald-900 text-[11px] font-semibold flex items-center gap-0.5 cursor-pointer"
+                  >
+                    {showSimulatedInbox ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+
+                {showSimulatedInbox && (
+                  <div className="space-y-3 pt-1 border-t border-emerald-200">
+                    <div className="space-y-1 text-[11px]">
+                      <div><strong>Người gửi:</strong> {simulatedEmail.sender}</div>
+                      <div><strong>Tiêu đề:</strong> {simulatedEmail.subject}</div>
+                      <div><strong>Thời gian:</strong> {simulatedEmail.sentAt}</div>
+                    </div>
+
+                    <div className="p-3 bg-white rounded-xl border border-emerald-200 text-center space-y-2 shadow-sm">
+                      <div className="text-[11px] text-[#553F35]/80 font-medium">
+                        Mã OTP xác nhận quyền sở hữu email của bạn:
+                      </div>
+                      <div className="text-3xl font-black font-mono tracking-widest text-[#365C4A] bg-[#FAF7F2] py-2 rounded-lg border border-[#365C4A]/20">
+                        {simulatedEmail.otp}
+                      </div>
+                      <div className="flex items-center justify-center gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const digits = simulatedEmail.otp.split('');
+                            setOtpDigits(digits);
+                            handleVerifyOtpSubmit(simulatedEmail.otp);
+                          }}
+                          className="px-3 py-1.5 rounded-full bg-[#365C4A] hover:bg-[#2A4839] text-white text-[11px] font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Copy className="w-3 h-3" />
+                          <span>Điền & Xác thực nhanh</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const match = simulatedEmail.magicLink.match(/verify_token=([^&]+)/);
+                            if (match && match[1]) {
+                              handleMagicLinkClick(match[1]);
+                            }
+                          }}
+                          className="px-3 py-1.5 rounded-full bg-white hover:bg-emerald-100 text-[#365C4A] border border-[#365C4A]/30 text-[11px] font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          <span>Bấm Link xác thực (Magic Link)</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <p className="text-[10px] text-emerald-800/80 leading-relaxed italic">
+                      * Lưu ý: Trong môi trường triển khai thực tế (Production), bức thư này được gửi thẳng từ máy chủ email Supabase/SMTP vào Inbox hoặc thư mục Spam của email sinh viên.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
           </div>
         </div>
       )}

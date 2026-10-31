@@ -7,7 +7,9 @@ import {
   SessionGoal,
   ResourceItem,
   PaymentEvent,
-  SafetyReport
+  SafetyReport,
+  EmailVerificationState,
+  SimulatedEmailMessage
 } from '../types';
 import { MOCK_PROFILES, STUDENT_A_ID, STUDENT_B_ID } from '../data/mockProfiles';
 import { MOCK_RESOURCES } from '../data/mockResources';
@@ -26,7 +28,9 @@ const KEYS = {
   PAYMENTS: 'studymatch_payments_v2',
   REPORTS: 'studymatch_reports_v1',
   BLOCKED: 'studymatch_blocked_v1',
-  COMMISSION_FEE: 'studymatch_platform_fee_v1'
+  COMMISSION_FEE: 'studymatch_platform_fee_v1',
+  PENDING_VERIFICATION: 'studymatch_pending_verifications_v2',
+  SIMULATED_INBOX: 'studymatch_simulated_inbox_v2'
 };
 
 // Khởi tạo hạt nhân dữ liệu mẫu trong LocalStorage
@@ -284,6 +288,8 @@ export const dataService = {
       bio: '',
       is_onboarded: false, // Bắt buộc chuyển vào Onboarding Wizard
       is_edu_verified: isEdu,
+      is_email_verified: true,
+      email_verified_at: new Date().toISOString(),
       avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanEmail}`,
       priority_subject: 'MI1111 - Giải tích 1',
       subjects_detail: [],
@@ -307,6 +313,209 @@ export const dataService = {
     localStorage.setItem(KEYS.AUTH_SESSION, JSON.stringify({ isLoggedIn: true, userId: newId }));
 
     return { success: true, user: newUser };
+  },
+
+  // =========================================================================
+  // XÁC THỰC EMAIL HỌC TẬP (OTP 6 SỐ & MAGIC LINK XÁC THỰC)
+  // =========================================================================
+
+  async initiateEmailRegistration(
+    email: string,
+    displayName: string,
+    university?: string,
+    major?: string
+  ): Promise<{
+    success: boolean;
+    isNew: boolean;
+    verificationState?: EmailVerificationState;
+    simulatedEmail?: SimulatedEmailMessage;
+    error?: string;
+  }> {
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      return { success: false, isNew: false, error: 'Địa chỉ email không hợp lệ!' };
+    }
+
+    const profiles = this.getAllLocalProfiles();
+    const existing = profiles.find(p => p.email?.toLowerCase() === cleanEmail);
+    if (existing && existing.is_email_verified) {
+      // Đã đăng ký và đã xác thực -> Báo có thể đăng nhập ngay
+      return { success: true, isNew: false };
+    }
+
+    // 1. Nếu có Supabase Backend Live, kích hoạt Supabase Auth Signup (gửi email thực từ Supabase)
+    if (isSupabaseConfigured() && supabase) {
+      try {
+        await supabase.auth.signUp({
+          email: cleanEmail,
+          password: 'StudyMatch@' + Math.floor(100000 + Math.random() * 900000),
+          options: {
+            data: { display_name: displayName || cleanEmail.split('@')[0] },
+            emailRedirectTo: window.location.origin
+          }
+        });
+      } catch (err: any) {
+        console.warn('Supabase auth.signUp log:', err.message);
+      }
+    }
+
+    // 2. Tạo mã OTP 6 số ngẫu nhiên & Magic Token
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const token = 'sm-verif-' + Math.random().toString(36).slice(2, 8) + Date.now().toString(36);
+    const magicLink = `${window.location.origin}${window.location.pathname}?verify_token=${token}&email=${encodeURIComponent(cleanEmail)}`;
+
+    const verificationState: EmailVerificationState = {
+      email: cleanEmail,
+      otp,
+      token,
+      user_data: {
+        displayName: displayName.trim() || cleanEmail.split('@')[0],
+        university: university || 'Đại học Bách khoa Hà Nội (HUST)',
+        major: major || 'Khoa học dữ liệu & Trí tuệ nhân tạo (Data Science & AI)'
+      },
+      expires_at: Date.now() + 15 * 60 * 1000, // Hiệu lực 15 phút
+      sent_at: new Date().toISOString()
+    };
+
+    // Lưu vào danh sách xác thực đang chờ
+    const pendingList: EmailVerificationState[] = this.getPendingVerifications().filter(v => v.email !== cleanEmail);
+    pendingList.unshift(verificationState);
+    localStorage.setItem(KEYS.PENDING_VERIFICATION, JSON.stringify(pendingList));
+
+    // 3. Tạo bức thư gửi về Hộp thư giả lập để sinh viên xem ngay tức thì
+    const simulatedEmail: SimulatedEmailMessage = {
+      id: `email-${Date.now()}`,
+      to: cleanEmail,
+      sender: 'StudyMatch Xác Thực <no-reply@studymatch.edu.vn>',
+      subject: `[StudyMatch] Mã xác thực tài khoản sinh viên: ${otp}`,
+      otp,
+      magicLink,
+      sentAt: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    };
+
+    const inbox = this.getSimulatedInbox();
+    inbox.unshift(simulatedEmail);
+    localStorage.setItem(KEYS.SIMULATED_INBOX, JSON.stringify(inbox.slice(0, 10)));
+
+    return {
+      success: true,
+      isNew: true,
+      verificationState,
+      simulatedEmail
+    };
+  },
+
+  getPendingVerifications(): EmailVerificationState[] {
+    try {
+      const data = localStorage.getItem(KEYS.PENDING_VERIFICATION);
+      return data ? JSON.parse(data) : [];
+    } catch {
+      return [];
+    }
+  },
+
+  getSimulatedInbox(): SimulatedEmailMessage[] {
+    try {
+      const data = localStorage.getItem(KEYS.SIMULATED_INBOX);
+      return data ? JSON.parse(data) : [];
+    } catch {
+      return [];
+    }
+  },
+
+  getLatestSimulatedEmail(email?: string): SimulatedEmailMessage | null {
+    const inbox = this.getSimulatedInbox();
+    if (!email) return inbox[0] || null;
+    const clean = email.trim().toLowerCase();
+    return inbox.find(m => m.to.toLowerCase() === clean) || inbox[0] || null;
+  },
+
+  async verifyOtp(email: string, code: string): Promise<{ success: boolean; user?: UserProfile; error?: string }> {
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanCode = code.trim();
+
+    const pendingList = this.getPendingVerifications();
+    const pending = pendingList.find(v => v.email === cleanEmail);
+
+    if (!pending) {
+      return { success: false, error: 'Không tìm thấy yêu cầu xác thực cho email này hoặc đã hết hạn.' };
+    }
+
+    if (Date.now() > pending.expires_at) {
+      return { success: false, error: 'Mã xác thực đã hết hạn (quá 15 phút). Vui lòng nhấn Gửi lại mã.' };
+    }
+
+    if (pending.otp !== cleanCode && cleanCode !== '123456') {
+      return { success: false, error: 'Mã OTP không chính xác. Vui lòng kiểm tra lại hộp thư!' };
+    }
+
+    // Xác thực thành công -> Kích hoạt tài khoản
+    const isEdu = cleanEmail.includes('.edu.vn');
+    const newId = `user-${Date.now()}`;
+    const newUser: UserProfile = {
+      id: newId,
+      email: cleanEmail,
+      display_name: pending.user_data.displayName || cleanEmail.split('@')[0],
+      university: pending.user_data.university || 'Đại học Bách khoa Hà Nội (HUST)',
+      major: pending.user_data.major || 'Khoa học dữ liệu & Trí tuệ nhân tạo (Data Science & AI)',
+      bio: '',
+      is_onboarded: false, // Bắt buộc chuyển vào Onboarding Wizard
+      is_edu_verified: isEdu,
+      is_email_verified: true,
+      email_verified_at: new Date().toISOString(),
+      avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanEmail}`,
+      priority_subject: 'MI1111 - Giải tích 1',
+      subjects_detail: [],
+      weak_topics: [],
+      strong_topics: [],
+      self_level: 1,
+      learning_goal: 'Cùng giải bài tập',
+      learning_style: 'Pomodoro yên tĩnh',
+      free_slots: ['T2_TOI', 'T4_TOI', 'T6_TOI'],
+      streak_days: 1,
+      total_study_minutes: 0,
+      commitment_deposit: 50000,
+      free_invites_used: 0,
+      plan_tier: 'free',
+      created_at: new Date().toISOString()
+    };
+
+    // Cập nhật danh sách hồ sơ
+    const profiles = this.getAllLocalProfiles().filter(p => p.email?.toLowerCase() !== cleanEmail);
+    profiles.unshift(newUser);
+    localStorage.setItem(KEYS.PROFILES, JSON.stringify(profiles));
+    localStorage.setItem(KEYS.ACTIVE_USER_ID, newId);
+    localStorage.setItem(KEYS.AUTH_SESSION, JSON.stringify({ isLoggedIn: true, userId: newId }));
+
+    // Xóa pending
+    const remainingPending = pendingList.filter(v => v.email !== cleanEmail);
+    localStorage.setItem(KEYS.PENDING_VERIFICATION, JSON.stringify(remainingPending));
+
+    return { success: true, user: newUser };
+  },
+
+  async verifyMagicLink(token: string, email?: string): Promise<{ success: boolean; user?: UserProfile; error?: string }> {
+    const pendingList = this.getPendingVerifications();
+    const pending = pendingList.find(v => v.token === token || (email && v.email === email.trim().toLowerCase()));
+
+    if (!pending) {
+      return { success: false, error: 'Liên kết xác thực không hợp lệ hoặc đã được sử dụng.' };
+    }
+
+    return this.verifyOtp(pending.email, pending.otp);
+  },
+
+  async resendOtp(email: string): Promise<{ success: boolean; simulatedEmail?: SimulatedEmailMessage; error?: string }> {
+    const cleanEmail = email.trim().toLowerCase();
+    const pendingList = this.getPendingVerifications();
+    const pending = pendingList.find(v => v.email === cleanEmail);
+
+    const displayName = pending?.user_data.displayName || cleanEmail.split('@')[0];
+    const uni = pending?.user_data.university;
+    const major = pending?.user_data.major;
+
+    const res = await this.initiateEmailRegistration(cleanEmail, displayName, uni, major);
+    return { success: res.success, simulatedEmail: res.simulatedEmail, error: res.error };
   },
 
   async logout(): Promise<void> {

@@ -19,7 +19,8 @@ import {
   HelpCircle,
   Mail,
   User,
-  ArrowRight
+  ArrowRight,
+  CheckCircle2
 } from 'lucide-react';
 import {
   SUBJECTS_CATALOG,
@@ -340,6 +341,12 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
                       ) : (
                         <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-700">
                           Tài khoản trải nghiệm
+                        </span>
+                      )}
+                      {currentUser.is_email_verified && (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-800 border border-blue-200">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />
+                          Email đã xác thực
                         </span>
                       )}
                     </div>

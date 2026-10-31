@@ -20,6 +20,8 @@ export interface UserProfile {
   bio?: string;            // Giới thiệu bản thân (TÍNH NĂNG MỚI)
   is_onboarded?: boolean;  // Cờ hoàn thành Onboarding lần đầu
   is_edu_verified: boolean;
+  is_email_verified?: boolean; // Xác thực email chính chủ
+  email_verified_at?: string;
   priority_subject: string;
   subjects_detail?: UserSubjectDetail[]; // Danh sách môn học với trình độ & điểm mạnh/yếu riêng biệt
   weak_topics: string[];
@@ -149,4 +151,27 @@ export interface SubjectCatalogItem {
   fullName: string;
   description: string;
   topics: string[];
+}
+
+export interface EmailVerificationState {
+  email: string;
+  otp: string;
+  token: string;
+  user_data: {
+    displayName: string;
+    university?: string;
+    major?: string;
+  };
+  expires_at: number;
+  sent_at: string;
+}
+
+export interface SimulatedEmailMessage {
+  id: string;
+  to: string;
+  subject: string;
+  sender: string;
+  otp: string;
+  magicLink: string;
+  sentAt: string;
 }
